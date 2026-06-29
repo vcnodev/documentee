@@ -21,6 +21,8 @@ export interface OpenApiOperation {
   responses?: Record<string, unknown>;
   security?: Array<Record<string, unknown>>;
   deprecated?: boolean;
+  "x-beta"?: boolean;
+  "x-codeSamples"?: unknown[];
 }
 
 export interface ApiParameter {
@@ -43,6 +45,11 @@ export interface ApiResponse {
   schemaRefs: string[];
 }
 
+export interface ApiCodeSample {
+  lang: string;
+  source: string;
+}
+
 export interface ApiOperation {
   specId: string;
   method: string;
@@ -54,8 +61,10 @@ export interface ApiOperation {
   description?: string;
   tags: string[];
   deprecated: boolean;
+  beta: boolean;
   auth: string[];
   parameters: ApiParameter[];
   requestBody?: ApiRequestBody;
   responses: ApiResponse[];
+  codeSamples: ApiCodeSample[];
 }

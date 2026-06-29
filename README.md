@@ -10,6 +10,7 @@ Implemented:
 - `documentee validate`
 - `documentee build`
 - `documentee dev`
+- `documentee migrate mintlify|docusaurus|nextra`
 - `documentee.config.ts` and `docs.json` config loading
 - Markdown/MDX page discovery
 - OpenAPI 3.x YAML/JSON loading
@@ -22,13 +23,19 @@ Implemented:
 - Astro renderer route scaffold
 - React server-rendered HTML spike
 - Next.js App Router and Pages Router adapter metadata spike with small HTML/no Documentee client JS checks
+- generated Astro project shell
+- generated Next.js App Router and Pages Router examples
+- MDX-style transforms for `Callout`, `Steps`, `Tabs`, and `CodeGroup`
+- deployment templates for GitHub Pages, Vercel, Netlify, and Cloudflare Pages
+- migration helpers for Mintlify, Docusaurus, and Nextra
+- contributor docs for architecture, testing, package boundaries, and small-HTML policy
 
 Planned next:
 
 - richer MDX components
 - browser API playground
-- full Astro/Vite app renderer
-- full Next.js integration from the current adapter spike
+- deeper theme customization
+- richer migration compatibility for framework-specific MDX components
 
 ## Quickstart
 
@@ -51,10 +58,11 @@ packages/search           Pagefind indexing wrapper
 packages/llms             llms.txt and llms-full.txt rendering
 packages/cli              documentee init/validate/build/dev
 packages/create           create-documentee wrapper
-packages/renderer-astro   Astro route metadata scaffold
+packages/renderer-astro   Astro route metadata and generated Astro project shell
 packages/react            server-rendered React HTML spike
-packages/renderer-next    Next App Router and Pages Router adapter scaffold
+packages/renderer-next    Next App Router and Pages Router adapter/example scaffold
 examples/basic            small docs project fixture
+templates/deploy          static host deployment templates
 ```
 
 ## Design Notes

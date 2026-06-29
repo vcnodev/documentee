@@ -16,6 +16,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 | 8 | complete | Execute the implementation plan with TDD |
 | 9 | complete | Verify tests, build, CLI smoke flow, and no unfinished markers |
 | 10 | complete | Continue steps 2-8: publishing, dev server, OpenAPI rendering, search, Astro, Next no-JS spike, validation |
+| 11 | complete | Continue next steps 1-9: git baseline, package READMEs, Astro project output, MDX components, API UI, Next examples, deploy templates, migrations, contributor docs |
 
 ## Decisions
 - Product direction: open-source docs generator, not hosted SaaS for v1.
@@ -25,6 +26,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 - Extended goal: basic React support and Next.js App Router / Pages Router server-rendered HTML mode with no Documentee client JavaScript.
 - First implementation milestone: working static generator foundation, not the full hosted/commercial platform.
 - Continuation goal: complete implementation steps 2-8 from the user's requested next steps.
+- Next-steps goal: close the listed items 1-9 from the user's latest request.
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

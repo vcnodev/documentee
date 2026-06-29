@@ -25,6 +25,10 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Huge"
 components:
   schemas:
     Huge:
@@ -46,7 +50,7 @@ components:
 
     const manifest = await buildManifest(root, config);
 
-    expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/api-reference/list-messages"]);
+    expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/api-reference/list-messages", "/schemas/Huge"]);
     expect(JSON.stringify(manifest.routes)).not.toContain("properties");
   });
 });

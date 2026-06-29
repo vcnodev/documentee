@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -26,5 +26,11 @@ describe("package boundaries", () => {
 
     expect(pkg.bin["create-documentee"]).toBe("./dist/src/index.js");
     expect(pkg.files).toEqual(["dist", "README.md"]);
+  });
+
+  it("all publishable packages include README files", async () => {
+    for (const dir of [...packageDirs, "create"]) {
+      await expect(stat(join(process.cwd(), "packages", dir, "README.md"))).resolves.toBeTruthy();
+    }
   });
 });

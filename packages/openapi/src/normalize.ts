@@ -1,4 +1,4 @@
-import type { ApiOperation, ApiParameter, ApiRequestBody, ApiResponse, OpenApiDocument, OpenApiOperation } from "./types.js";
+import type { ApiCodeSample, ApiOperation, ApiParameter, ApiRequestBody, ApiResponse, OpenApiDocument, OpenApiOperation } from "./types.js";
 
 const METHODS = new Set(["get", "put", "post", "delete", "patch", "options", "head", "trace"]);
 
@@ -25,15 +25,26 @@ export function normalizeOperations(specId: string, routeBase: string, spec: Ope
         description: normalized.description,
         tags: Array.isArray(normalized.tags) ? normalized.tags.filter((tag): tag is string => typeof tag === "string") : [],
         deprecated: normalized.deprecated === true,
+        beta: normalized["x-beta"] === true,
         auth: normalizeAuth(normalized.security),
         parameters: normalizeParameters(normalized.parameters),
         requestBody: normalizeRequestBody(normalized.requestBody),
         responses: normalizeResponses(normalized.responses),
+        codeSamples: normalizeCodeSamples(normalized["x-codeSamples"]),
       });
     }
   }
 
   return operations.sort((a, b) => a.route.localeCompare(b.route));
+}
+
+function normalizeCodeSamples(samples: unknown): ApiCodeSample[] {
+  if (!Array.isArray(samples)) return [];
+  return samples.filter(isRecord).flatMap((sample) => {
+    const lang = stringValue(sample.lang) ?? stringValue(sample.language);
+    const source = stringValue(sample.source) ?? stringValue(sample.code);
+    return lang && source ? [{ lang, source }] : [];
+  });
 }
 
 function normalizeAuth(security: OpenApiOperation["security"]): string[] {

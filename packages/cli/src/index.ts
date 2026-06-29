@@ -2,12 +2,14 @@
 import { buildCommand } from "./commands/build.js";
 import { devCommand } from "./commands/dev.js";
 import { initCommand } from "./commands/init.js";
+import { migrateCommand, type MigrationSource } from "./commands/migrate.js";
 import { validateCommand } from "./commands/validate.js";
 import { resolve } from "node:path";
 
 export { buildCommand } from "./commands/build.js";
 export { devCommand } from "./commands/dev.js";
 export { initCommand } from "./commands/init.js";
+export { migrateCommand } from "./commands/migrate.js";
 export { validateCommand } from "./commands/validate.js";
 
 export async function runCli(argv: string[]): Promise<void> {
@@ -43,6 +45,15 @@ export async function runCli(argv: string[]): Promise<void> {
     const address = server.address();
     const boundPort = typeof address === "object" && address ? address.port : port;
     console.log(`Documentee dev server running at http://127.0.0.1:${boundPort}`);
+    return;
+  }
+
+  if (command === "migrate") {
+    const [sourceType, source, target] = [projectRoot, ...rest];
+    if (!sourceType || !source || !target) {
+      throw new Error("Usage: documentee migrate <mintlify|docusaurus|nextra> <source> <target>");
+    }
+    await migrateCommand(sourceType as MigrationSource, resolveCliPath(source), resolveCliPath(target));
     return;
   }
 

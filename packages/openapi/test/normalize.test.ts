@@ -80,6 +80,10 @@ describe("normalizeOperations", () => {
               "404": { description: "Missing" },
             },
             security: [{ bearerAuth: [] }],
+            "x-beta": true,
+            "x-codeSamples": [
+              { lang: "curl", source: "curl https://api.acme.test/messages/id" },
+            ],
           },
         },
       },
@@ -110,6 +114,8 @@ describe("normalizeOperations", () => {
       { status: "200", description: "Updated", mediaTypes: ["application/json"], schemaRefs: ["Message"] },
       { status: "404", description: "Missing", mediaTypes: [], schemaRefs: [] },
     ]);
+    expect(operation.beta).toBe(true);
+    expect(operation.codeSamples).toEqual([{ lang: "curl", source: "curl https://api.acme.test/messages/id" }]);
     expect(JSON.stringify(operation)).not.toContain("properties");
   });
 });

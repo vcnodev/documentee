@@ -20,3 +20,7 @@
 - Completed continuation implementation: built package exports, `documentee dev`, richer OpenAPI compact rendering, Pagefind indexing, Astro route scaffold, React server-rendered HTML spike, Next adapter scaffold, and validation hardening.
 - Final continuation verification passed: `pnpm test` (15 files, 24 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, Pagefind output generation, dev server smoke check, and unfinished-marker scan.
 - Created next-steps plan at `docs/superpowers/plans/2026-06-30-documentee-next-steps-1-9.md`.
+- Initialized git and committed the baseline as `feat: bootstrap documentee`.
+- Added package READMEs, generated Astro project files, MDX-style component transforms, richer OpenAPI UI/schema routes/code samples, generated Next examples, deployment templates, migration commands, and contributor docs.
+- Final next-steps verification passed: `pnpm test` (20 files, 34 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, Pagefind output generation, and unfinished-marker scan.
+- Committed completed next-steps batch as `7196440 feat: expand documentee platform baseline`.

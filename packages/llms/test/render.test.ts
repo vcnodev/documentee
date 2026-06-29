@@ -24,9 +24,11 @@ describe("LLM text renderers", () => {
           summary: "List messages",
           tags: ["Messages"],
           deprecated: false,
+          beta: false,
           auth: [],
           parameters: [],
           responses: [],
+          codeSamples: [],
         },
       ],
       routes: [

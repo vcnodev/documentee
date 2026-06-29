@@ -74,10 +74,12 @@ describe("static renderer", () => {
             summary: "Update a message",
             tags: ["Messages"],
             deprecated: false,
+            beta: true,
             auth: ["bearerAuth"],
             parameters: [{ name: "id", location: "path", required: true }],
             requestBody: { required: false, mediaTypes: ["application/json"], schemaRefs: ["UpdateMessageRequest"] },
             responses: [{ status: "200", description: "Updated", mediaTypes: ["application/json"], schemaRefs: ["Message"] }],
+            codeSamples: [{ lang: "curl", source: "curl https://api.acme.test/messages/id" }],
           },
         },
       ],
@@ -91,6 +93,40 @@ describe("static renderer", () => {
     expect(html).toContain("Request Body");
     expect(html).toContain("Responses");
     expect(html).toContain("UpdateMessageRequest");
+    expect(html).toContain("Beta");
+    expect(html).toContain("Code Samples");
+    expect(html).toContain("curl https://api.acme.test/messages/id");
     expect(html).not.toContain("properties");
+  });
+
+  it("renders schema detail routes separately", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "schema",
+          route: "/schemas/Message",
+          title: "Schema: Message",
+          description: "Shared schema reference.",
+          html: "",
+          markdown: "",
+          schema: { name: "Message", specId: "core" },
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("Schema: Message");
+    expect(html).toContain("Shared schema reference");
   });
 });

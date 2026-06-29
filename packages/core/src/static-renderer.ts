@@ -20,7 +20,11 @@ export async function renderStaticSite(manifest: SiteManifest, options: StaticRe
 }
 
 export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
-  const body = route.kind === "api-operation" && route.operation ? renderApiOperation(route) : route.html;
+  const body = route.kind === "api-operation" && route.operation
+    ? renderApiOperation(route)
+    : route.kind === "schema" && route.schema
+      ? renderSchema(route)
+      : route.html;
   const nav = renderNavigation(manifest);
 
   return `<!doctype html>
@@ -95,6 +99,8 @@ function renderApiOperation(route: SiteRoute): string {
   const summary = operation.summary ? `<p>${escapeHtml(operation.summary)}</p>` : "";
   const description = operation.description ? `<p>${escapeHtml(operation.description)}</p>` : "";
   const tags = operation.tags.length > 0 ? `<p>Tags: ${operation.tags.map(escapeHtml).join(", ")}</p>` : "";
+  const badges = [operation.deprecated ? "Deprecated" : "", operation.beta ? "Beta" : ""].filter(Boolean);
+  const badgeHtml = badges.length > 0 ? `<p>${badges.map((badge) => `<span class="badge">${badge}</span>`).join(" ")}</p>` : "";
   const auth = operation.auth.length > 0 ? `<section><h2>Authentication</h2><p>${operation.auth.map(escapeHtml).join(", ")}</p></section>` : "";
   const parameters = operation.parameters.length > 0
     ? `<section><h2>Parameters</h2><table><tbody>${operation.parameters.map((parameter) => `<tr><td>${escapeHtml(parameter.name)}</td><td>${escapeHtml(parameter.location)}</td><td>${parameter.required ? "required" : "optional"}</td></tr>`).join("")}</tbody></table></section>`
@@ -105,9 +111,13 @@ function renderApiOperation(route: SiteRoute): string {
   const responses = operation.responses.length > 0
     ? `<section><h2>Responses</h2>${operation.responses.map((response) => `<article><h3>${escapeHtml(response.status)}</h3><p>${escapeHtml(response.description)}</p>${response.mediaTypes.length > 0 ? `<p>${response.mediaTypes.map(escapeHtml).join(", ")}</p>` : ""}${renderSchemaRefs(response.schemaRefs)}</article>`).join("")}</section>`
     : "";
+  const codeSamples = operation.codeSamples.length > 0
+    ? `<section><h2>Code Samples</h2>${operation.codeSamples.map((sample) => `<figure><figcaption>${escapeHtml(sample.lang)}</figcaption><pre><code>${escapeHtml(sample.source)}</code></pre></figure>`).join("")}</section>`
+    : "";
 
   return `<article>
   <h1><span class="method">${escapeHtml(operation.method)}</span> <span class="path">${escapeHtml(operation.path)}</span></h1>
+  ${badgeHtml}
   ${summary}
   ${description}
   ${tags}
@@ -115,6 +125,16 @@ function renderApiOperation(route: SiteRoute): string {
   ${parameters}
   ${requestBody}
   ${responses}
+  ${codeSamples}
+</article>`;
+}
+
+function renderSchema(route: SiteRoute): string {
+  if (!route.schema) return "";
+  return `<article>
+  <h1>${escapeHtml(route.title)}</h1>
+  <p>${escapeHtml(route.description)}</p>
+  <p>Spec: ${escapeHtml(route.schema.specId)}</p>
 </article>`;
 }
 

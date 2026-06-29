@@ -4,6 +4,7 @@ import fg from "fast-glob";
 import matter from "gray-matter";
 import { marked } from "marked";
 import type { DocumenteeConfig } from "./config.js";
+import { renderMdxComponents } from "./mdx-components.js";
 
 export interface ContentPage {
   sourcePath: string;
@@ -32,7 +33,7 @@ export async function loadContentPages(
 async function loadPage(contentRoot: string, filePath: string): Promise<ContentPage> {
   const raw = await readFile(filePath, "utf8");
   const parsed = matter(raw);
-  const markdown = parsed.content.trim();
+  const markdown = renderMdxComponents(parsed.content.trim());
   const html = await marked.parse(markdown, { async: true });
   const route = routeFromFile(contentRoot, filePath);
 

@@ -4,7 +4,12 @@ import type { DocumenteeConfig } from "./config.js";
 import type { ContentPage } from "./content.js";
 import { loadContentPages } from "./content.js";
 
-export type RouteKind = "page" | "api-operation";
+export type RouteKind = "page" | "api-operation" | "schema";
+
+export interface SchemaReference {
+  name: string;
+  specId: string;
+}
 
 export interface SiteRoute {
   kind: RouteKind;
@@ -14,6 +19,7 @@ export interface SiteRoute {
   html: string;
   markdown: string;
   operation?: ApiOperation;
+  schema?: SchemaReference;
 }
 
 export interface SiteManifest {
@@ -50,7 +56,29 @@ export async function buildManifest(projectRoot: string, config: DocumenteeConfi
       markdown: operation.description ?? operation.summary ?? "",
       operation,
     })),
+    ...schemaReferences(operations).map((schema): SiteRoute => ({
+      kind: "schema",
+      route: `/schemas/${schema.name}`,
+      title: `Schema: ${schema.name}`,
+      description: "Shared schema reference.",
+      html: "",
+      markdown: "",
+      schema,
+    })),
   ].sort((a, b) => a.route.localeCompare(b.route));
 
   return { config, pages, operations, routes };
+}
+
+function schemaReferences(operations: ApiOperation[]): SchemaReference[] {
+  const refs = new Map<string, SchemaReference>();
+  for (const operation of operations) {
+    for (const name of [
+      ...(operation.requestBody?.schemaRefs ?? []),
+      ...operation.responses.flatMap((response) => response.schemaRefs),
+    ]) {
+      refs.set(`${operation.specId}:${name}`, { specId: operation.specId, name });
+    }
+  }
+  return [...refs.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

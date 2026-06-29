@@ -1,0 +1,7 @@
+[build]
+command = "pnpm --filter @documentee/cli documentee build . --out dist"
+publish = "dist"
+
+[build.environment]
+NODE_VERSION = "22"
+PNPM_VERSION = "11.7.0"

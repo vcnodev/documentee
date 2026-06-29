@@ -30,4 +30,43 @@ Welcome to **Acme**.
     expect(pages[0].html).toContain("<h1>Hello</h1>");
     expect(pages[0].html).toContain("<strong>Acme</strong>");
   });
+
+  it("renders supported MDX-style components into static HTML", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-content-"));
+    await mkdir(join(root, "docs"), { recursive: true });
+    await writeFile(
+      join(root, "docs", "components.mdx"),
+      `---
+title: Components
+---
+
+<Callout type="warning">
+Check your API key.
+</Callout>
+
+<Steps>
+<Step title="Install">Run pnpm install.</Step>
+<Step title="Build">Run pnpm build.</Step>
+</Steps>
+
+<Tabs>
+<Tab title="curl">curl https://api.acme.test</Tab>
+<Tab title="js">fetch("/api")</Tab>
+</Tabs>
+
+<CodeGroup>
+\`\`\`bash
+pnpm test
+\`\`\`
+</CodeGroup>
+`,
+    );
+
+    const [page] = await loadContentPages(root, { directory: "docs" });
+
+    expect(page.html).toContain('class="doc-callout doc-callout-warning"');
+    expect(page.html).toContain("<strong>Install</strong>");
+    expect(page.html).toContain('class="doc-tabs"');
+    expect(page.html).toContain('class="doc-code-group"');
+  });
 });
