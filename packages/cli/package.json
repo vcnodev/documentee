@@ -1,0 +1,33 @@
+{
+  "name": "@documentee/cli",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "documentee": "./dist/src/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "documentee": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@documentee/core": "workspace:*",
+    "@documentee/llms": "workspace:*",
+    "@documentee/search": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}

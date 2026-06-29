@@ -1,0 +1,20 @@
+{
+  "name": "documentee",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r --sort run build",
+    "test": "pnpm build && vitest run",
+    "typecheck": "pnpm -r --sort run typecheck",
+    "validate": "pnpm --filter @documentee/cli documentee validate examples/basic",
+    "example:build": "pnpm --filter @documentee/cli documentee build examples/basic --out dist-example"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "packageManager": "pnpm@11.7.0"
+}

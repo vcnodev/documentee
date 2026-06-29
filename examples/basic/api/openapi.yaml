@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: Acme API
+  version: 1.0.0
+  description: Example API used by Documentee.
+paths:
+  /messages:
+    get:
+      operationId: listMessages
+      summary: List messages
+      description: Returns the latest messages.
+      tags:
+        - Messages
+      responses:
+        "200":
+          description: OK
+  /messages/{id}:
+    get:
+      operationId: getMessage
+      summary: Get a message
+      description: Returns one message by ID.
+      tags:
+        - Messages
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
