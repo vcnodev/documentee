@@ -7,7 +7,7 @@ export default {
     directory: "docs",
   },
   navigation: [
-    { group: "Get Started", pages: ["docs/index", "docs/get-started/quickstart"] },
+    { group: "Get Started", pages: ["docs/index", "docs/get-started/quickstart", "docs/components"] },
     { group: "API Reference", openapi: "core" },
   ],
   openapi: {

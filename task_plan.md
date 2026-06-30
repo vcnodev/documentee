@@ -17,6 +17,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 | 9 | complete | Verify tests, build, CLI smoke flow, and no unfinished markers |
 | 10 | complete | Continue steps 2-8: publishing, dev server, OpenAPI rendering, search, Astro, Next no-JS spike, validation |
 | 11 | complete | Continue next steps 1-9: git baseline, package READMEs, Astro project output, MDX components, API UI, Next examples, deploy templates, migrations, contributor docs |
+| 12 | complete | Complete richer MDX components beyond Callout, Steps, Tabs, and CodeGroup |
 
 ## Decisions
 - Product direction: open-source docs generator, not hosted SaaS for v1.
@@ -27,6 +28,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 - First implementation milestone: working static generator foundation, not the full hosted/commercial platform.
 - Continuation goal: complete implementation steps 2-8 from the user's requested next steps.
 - Next-steps goal: close the listed items 1-9 from the user's latest request.
+- Richer MDX components goal: add static no-client-JS authoring primitives for cards, accordions, fields, frames, icons, and badges.
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

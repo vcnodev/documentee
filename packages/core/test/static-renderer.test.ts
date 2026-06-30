@@ -129,4 +129,36 @@ describe("static renderer", () => {
     expect(html).toContain("Schema: Message");
     expect(html).toContain("Shared schema reference");
   });
+
+  it("includes default styles for richer MDX components", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/components",
+          title: "Components",
+          description: "",
+          html: '<div class="doc-card-group"><article class="doc-card">Card</article></div>',
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain(".doc-card-group");
+    expect(html).toContain(".doc-accordion");
+    expect(html).toContain(".doc-field");
+    expect(html).toContain(".doc-frame");
+  });
 });

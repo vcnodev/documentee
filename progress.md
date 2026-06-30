@@ -23,4 +23,7 @@
 - Initialized git and committed the baseline as `feat: bootstrap documentee`.
 - Added package READMEs, generated Astro project files, MDX-style component transforms, richer OpenAPI UI/schema routes/code samples, generated Next examples, deployment templates, migration commands, and contributor docs.
 - Final next-steps verification passed: `pnpm test` (20 files, 34 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, Pagefind output generation, and unfinished-marker scan.
-- Committed completed next-steps batch as `7196440 feat: expand documentee platform baseline`.
+- Committed completed next-steps batch as `ce72964 feat: expand documentee platform baseline`.
+- Started richer MDX components goal covering static no-client-JS cards, accordions, fields, frames, icons, and badges.
+- Implemented richer MDX component transforms for `Accordion`, `AccordionGroup`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`, plus default static renderer styles and an example components page.
+- Verification for richer MDX components passed: focused red-green tests, `pnpm test` (21 files, 36 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated components-route markup inspection, and no-script spot check.

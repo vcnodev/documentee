@@ -25,14 +25,13 @@ Implemented:
 - Next.js App Router and Pages Router adapter metadata spike with small HTML/no Documentee client JS checks
 - generated Astro project shell
 - generated Next.js App Router and Pages Router examples
-- MDX-style transforms for `Callout`, `Steps`, `Tabs`, and `CodeGroup`
+- MDX-style transforms for `Callout`, `Steps`, `Tabs`, `CodeGroup`, `Accordion`, `AccordionGroup`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`
 - deployment templates for GitHub Pages, Vercel, Netlify, and Cloudflare Pages
 - migration helpers for Mintlify, Docusaurus, and Nextra
 - contributor docs for architecture, testing, package boundaries, and small-HTML policy
 
 Planned next:
 
-- richer MDX components
 - browser API playground
 - deeper theme customization
 - richer migration compatibility for framework-specific MDX components

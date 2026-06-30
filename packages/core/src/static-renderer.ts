@@ -42,6 +42,32 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .method { font-weight: 700; }
     .path { color: #52525b; }
+    .doc-badge, .badge { border: 1px solid #d4d4d8; border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; }
+    .doc-badge-success { border-color: #16a34a; color: #166534; }
+    .doc-badge-warning { border-color: #f59e0b; color: #92400e; }
+    .doc-badge-danger { border-color: #dc2626; color: #991b1b; }
+    .doc-icon { align-items: center; border: 1px solid #d4d4d8; border-radius: 6px; display: inline-flex; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; height: 24px; justify-content: center; min-width: 24px; padding: 0 4px; }
+    .doc-card-group { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 20px 0; }
+    .doc-card-group-1 { grid-template-columns: 1fr; }
+    .doc-card-group-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .doc-card-group-3 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+    .doc-card { border: 1px solid #d4d4d8; border-radius: 8px; color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; }
+    .doc-card h3 { font-size: 16px; margin: 0 0 6px; }
+    .doc-card p { color: #52525b; margin: 0; }
+    .doc-card-icon { flex: 0 0 auto; }
+    .doc-accordion-group { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; }
+    .doc-accordion { border-top: 1px solid #d4d4d8; padding: 0; }
+    .doc-accordion:first-child { border-top: 0; }
+    .doc-accordion summary { cursor: pointer; font-weight: 700; padding: 14px 16px; }
+    .doc-accordion div { color: #52525b; padding: 0 16px 16px; }
+    .doc-field { border-left: 3px solid #18181b; margin: 16px 0; padding: 4px 0 4px 14px; }
+    .doc-field div { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+    .doc-field p { color: #52525b; margin: 6px 0 0; }
+    .doc-field-type, .doc-field-required { border: 1px solid #d4d4d8; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; padding: 2px 6px; }
+    .doc-field-required { color: #991b1b; }
+    .doc-frame { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; padding: 12px; }
+    .doc-frame img { display: block; height: auto; max-width: 100%; }
+    .doc-frame figcaption { color: #52525b; font-size: 13px; margin-top: 10px; }
   </style>
 </head>
 <body>

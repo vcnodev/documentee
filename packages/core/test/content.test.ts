@@ -59,6 +59,24 @@ Check your API key.
 pnpm test
 \`\`\`
 </CodeGroup>
+
+<Badge text="Stable" tone="success" />
+
+<CardGroup cols="2">
+<Card title="Guide" href="/guide">Read the guide.</Card>
+</CardGroup>
+
+<AccordionGroup>
+<Accordion title="Question">Answer.</Accordion>
+</AccordionGroup>
+
+<ParamField path="body.id" type="string" required>Identifier.</ParamField>
+
+<ResponseField name="message" type="object">Message object.</ResponseField>
+
+<Frame caption="Preview">
+<img src="/preview.png" alt="Preview">
+</Frame>
 `,
     );
 
@@ -68,5 +86,11 @@ pnpm test
     expect(page.html).toContain("<strong>Install</strong>");
     expect(page.html).toContain('class="doc-tabs"');
     expect(page.html).toContain('class="doc-code-group"');
+    expect(page.html).toContain('class="doc-badge doc-badge-success"');
+    expect(page.html).toContain('class="doc-card-group doc-card-group-2"');
+    expect(page.html).toContain('class="doc-accordion-group"');
+    expect(page.html).toContain('class="doc-field doc-field-param"');
+    expect(page.html).toContain('class="doc-field doc-field-response"');
+    expect(page.html).toContain('class="doc-frame"');
   });
 });

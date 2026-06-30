@@ -1,0 +1,34 @@
+---
+title: Components
+description: Static MDX-style authoring components.
+---
+
+# Components
+
+<Badge text="No client JS" tone="success" />
+
+<Callout type="note">
+Use these components for richer docs pages while keeping the output static.
+</Callout>
+
+<CardGroup cols="2">
+<Card title="Guides" icon="book" href="/get-started/quickstart">Write task-focused product documentation.</Card>
+<Card title="API Reference" icon="api" href="/api-reference/list-messages">Generate compact endpoint pages from OpenAPI.</Card>
+</CardGroup>
+
+<AccordionGroup>
+<Accordion title="Do these components need browser JavaScript?">No. They render to static HTML, including native details elements for accordions.</Accordion>
+<Accordion title="Can fields describe request and response shapes?">Yes. Use ParamField and ResponseField for compact inline API documentation.</Accordion>
+</AccordionGroup>
+
+<ParamField path="body.message" type="string" required>
+The message text sent to the API.
+</ParamField>
+
+<ResponseField name="message" type="object">
+The message object returned by the API.
+</ResponseField>
+
+<Frame caption="Example dashboard preview">
+<img src="/dashboard.png" alt="Dashboard preview">
+</Frame>
