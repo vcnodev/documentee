@@ -29,6 +29,39 @@ const openApiSpecSchema = z.object({
   playground: playgroundSchema,
 });
 
+const robotsRuleSchema = z.object({
+  userAgent: z.string().min(1),
+  allow: z.string().optional(),
+  disallow: z.string().optional(),
+});
+
+const seoSchema = z.object({
+  titleTemplate: z.string().optional(),
+  image: z.string().optional(),
+  twitterCard: z.enum(["summary", "summary_large_image"]).default("summary_large_image"),
+  sitemap: z.boolean().default(true),
+  robots: z.object({
+    enabled: z.boolean().default(true),
+    rules: z.array(robotsRuleSchema).default([{ userAgent: "*", allow: "/" }]),
+  }).default({
+    enabled: true,
+    rules: [{ userAgent: "*", allow: "/" }],
+  }),
+}).default({
+  sitemap: true,
+  robots: {
+    enabled: true,
+    rules: [{ userAgent: "*", allow: "/" }],
+  },
+  twitterCard: "summary_large_image",
+});
+
+const redirectSchema = z.object({
+  from: z.string().min(1),
+  to: z.string().min(1),
+  status: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).default(301),
+});
+
 const configSchema = z.object({
   site: z.object({
     name: z.string().min(1),
@@ -43,6 +76,8 @@ const configSchema = z.object({
   openapi: z.object({
     specs: z.array(openApiSpecSchema).default([]),
   }).default({ specs: [] }),
+  seo: seoSchema,
+  redirects: z.array(redirectSchema).default([]),
   search: z.object({
     provider: z.enum(["none", "pagefind"]).default("none"),
   }).default({ provider: "none" }),
@@ -61,6 +96,8 @@ const docsJsonSchema = z.object({
   openapi: z.object({
     specs: z.array(openApiSpecSchema).default([]),
   }).default({ specs: [] }),
+  seo: seoSchema.optional(),
+  redirects: z.array(redirectSchema).optional(),
   colors: z.object({
     primary: z.string().optional(),
   }).optional(),
@@ -114,6 +151,8 @@ function normalizeDocsJson(input: unknown): DocumenteeConfig {
     content: { directory: "docs" },
     navigation: parsed.navigation,
     openapi: parsed.openapi,
+    seo: parsed.seo,
+    redirects: parsed.redirects ?? [],
     search: { provider: "none" },
     theme: {
       primaryColor: parsed.colors?.primary,

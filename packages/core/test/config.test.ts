@@ -26,7 +26,53 @@ describe("loadConfig", () => {
       auth: "none",
       apiKeyLocation: "header",
     });
+    expect(config.seo).toEqual({
+      sitemap: true,
+      robots: {
+        enabled: true,
+        rules: [{ userAgent: "*", allow: "/" }],
+      },
+      twitterCard: "summary_large_image",
+    });
+    expect(config.redirects).toEqual([]);
     expect(config.search.provider).toBe("none");
+  });
+
+  it("loads SEO and redirect settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        url: "https://docs.acme.test",
+        seo: {
+          titleTemplate: "%s | Acme",
+          image: "/og.png",
+          twitterCard: "summary",
+          sitemap: false,
+          robots: {
+            enabled: true,
+            rules: [{ userAgent: "*", disallow: "/internal" }],
+          },
+        },
+        redirects: [{ from: "/old", to: "/new", status: 308 }],
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.site.url).toBe("https://docs.acme.test");
+    expect(config.seo).toEqual({
+      titleTemplate: "%s | Acme",
+      image: "/og.png",
+      twitterCard: "summary",
+      sitemap: false,
+      robots: {
+        enabled: true,
+        rules: [{ userAgent: "*", disallow: "/internal" }],
+      },
+    });
+    expect(config.redirects).toEqual([{ from: "/old", to: "/new", status: 308 }]);
   });
 
   it("loads OpenAPI playground settings", async () => {

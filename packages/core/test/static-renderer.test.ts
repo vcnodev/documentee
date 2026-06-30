@@ -5,6 +5,12 @@ import { describe, expect, it } from "vitest";
 import type { SiteManifest } from "../src/manifest.js";
 import { assertHtmlBudget, renderRoute, renderStaticSite } from "../src/static-renderer.js";
 
+const defaultSeo = {
+  sitemap: true,
+  robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+  twitterCard: "summary_large_image" as const,
+};
+
 describe("static renderer", () => {
   it("writes index.html files for routes", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "documentee-render-"));
@@ -15,6 +21,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },
@@ -39,6 +47,88 @@ describe("static renderer", () => {
     expect(html).toContain("Acme");
   });
 
+  it("renders SEO metadata in HTML pages", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", url: "https://docs.acme.test", description: "Docs" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: {
+          titleTemplate: "%s | Acme",
+          image: "/og.png",
+          twitterCard: "summary_large_image",
+          sitemap: true,
+          robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        },
+        redirects: [],
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/quickstart",
+          title: "Quickstart",
+          description: "Start quickly.",
+          seo: { robots: "noindex", image: "/quickstart.png" },
+          html: "<h1>Quickstart</h1>",
+          markdown: "# Quickstart",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("<title>Quickstart | Acme</title>");
+    expect(html).toContain('<link rel="canonical" href="https://docs.acme.test/quickstart/">');
+    expect(html).toContain('<meta name="robots" content="noindex">');
+    expect(html).toContain('<meta property="og:image" content="https://docs.acme.test/quickstart.png">');
+  });
+
+  it("writes sitemap, robots, and redirect artifacts", async () => {
+    const outDir = await mkdtemp(join(tmpdir(), "documentee-seo-"));
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", url: "https://docs.acme.test", description: "Docs" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: {
+          twitterCard: "summary_large_image",
+          sitemap: true,
+          robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        },
+        redirects: [{ from: "/old", to: "/quickstart", status: 301 }],
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/quickstart",
+          title: "Quickstart",
+          description: "Start quickly.",
+          seo: {},
+          html: "<h1>Quickstart</h1>",
+          markdown: "# Quickstart",
+        },
+      ],
+    };
+
+    await renderStaticSite(manifest, { outDir });
+
+    expect(await readFile(join(outDir, "sitemap.xml"), "utf8")).toContain("https://docs.acme.test/quickstart/");
+    expect(await readFile(join(outDir, "robots.txt"), "utf8")).toContain("Sitemap: https://docs.acme.test/sitemap.xml");
+    expect(await readFile(join(outDir, "_redirects"), "utf8")).toBe("/old /quickstart 301\n");
+    expect(await readFile(join(outDir, "vercel.json"), "utf8")).toContain('"source": "/old"');
+    expect(await readFile(join(outDir, "old", "index.html"), "utf8")).toContain("Redirecting");
+  });
+
   it("fails when HTML exceeds the route budget", () => {
     expect(() => assertHtmlBudget("<p>too large</p>", 3, "/large")).toThrow(
       "/large HTML payload",
@@ -52,6 +142,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },
@@ -106,6 +198,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },
@@ -137,6 +231,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },
@@ -169,6 +265,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },
@@ -236,6 +334,8 @@ describe("static renderer", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },

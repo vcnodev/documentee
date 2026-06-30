@@ -67,6 +67,29 @@ paths:
 
     expect(diagnostics).toContain("Duplicate route: /api-reference/same");
   });
+
+  it("reports redirect source conflicts with generated routes", async () => {
+    const root = await createProject({
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        redirects: [{ from: "/old", to: "/", status: 301 }],
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: {
+        "docs/old.mdx": "---\ntitle: Old\n---\n# Old\n",
+      },
+    });
+
+    const config = await loadConfig(root);
+    const manifest = await buildManifest(root, config);
+    const diagnostics = validateManifest(manifest);
+
+    expect(diagnostics).toContain("Redirect source conflicts with generated route: /old");
+  });
 });
 
 async function createProject(input: {

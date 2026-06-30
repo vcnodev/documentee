@@ -27,8 +27,39 @@ Welcome to **Acme**.
     expect(pages[0].route).toBe("/get-started/quickstart");
     expect(pages[0].title).toBe("Quickstart");
     expect(pages[0].description).toBe("Start using Acme.");
+    expect(pages[0].seo).toEqual({});
     expect(pages[0].html).toContain("<h1>Hello</h1>");
     expect(pages[0].html).toContain("<strong>Acme</strong>");
+  });
+
+  it("loads SEO frontmatter fields", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-content-"));
+    await mkdir(join(root, "docs"), { recursive: true });
+    await writeFile(
+      join(root, "docs", "quickstart.mdx"),
+      `---
+title: Quickstart
+description: Start using Acme.
+canonical: https://docs.acme.test/start
+robots: noindex,nofollow
+image: /quickstart-og.png
+socialTitle: Start with Acme
+socialDescription: Send your first request.
+---
+
+# Hello
+`,
+    );
+
+    const [page] = await loadContentPages(root, { directory: "docs" });
+
+    expect(page.seo).toEqual({
+      canonical: "https://docs.acme.test/start",
+      robots: "noindex,nofollow",
+      image: "/quickstart-og.png",
+      socialTitle: "Start with Acme",
+      socialDescription: "Send your first request.",
+    });
   });
 
   it("renders supported MDX-style components into static HTML", async () => {

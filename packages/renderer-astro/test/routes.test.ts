@@ -10,6 +10,12 @@ describe("createAstroRouteModules", () => {
         content: { directory: "docs" },
         navigation: [],
         openapi: { specs: [] },
+        seo: {
+          sitemap: true,
+          robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+          twitterCard: "summary_large_image",
+        },
+        redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
       },

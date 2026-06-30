@@ -17,6 +17,7 @@ Implemented:
 - compact API operation route generation with auth, parameters, request body, responses, and schema-reference links
 - opt-in browser API playground / try-it UI for generated OpenAPI operation pages
 - static HTML output
+- `sitemap.xml`, `robots.txt`, static redirect fallback pages, `_redirects`, Vercel redirect artifact, and SEO metadata
 - Pagefind indexing for static builds when `search.provider` is `pagefind`
 - `llms.txt` and `llms-full.txt`
 - validation for duplicate routes, missing navigation targets, and broken internal links

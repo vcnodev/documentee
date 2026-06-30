@@ -11,8 +11,17 @@ export interface ContentPage {
   route: string;
   title: string;
   description: string;
+  seo: PageSeo;
   markdown: string;
   html: string;
+}
+
+export interface PageSeo {
+  canonical?: string;
+  robots?: string;
+  image?: string;
+  socialTitle?: string;
+  socialDescription?: string;
 }
 
 export async function loadContentPages(
@@ -42,6 +51,13 @@ async function loadPage(contentRoot: string, filePath: string): Promise<ContentP
     route,
     title: stringValue(parsed.data.title) ?? titleFromRoute(route),
     description: stringValue(parsed.data.description) ?? "",
+    seo: {
+      canonical: stringValue(parsed.data.canonical),
+      robots: stringValue(parsed.data.robots),
+      image: stringValue(parsed.data.image),
+      socialTitle: stringValue(parsed.data.socialTitle),
+      socialDescription: stringValue(parsed.data.socialDescription),
+    },
     markdown,
     html,
   };

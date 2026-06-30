@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { escapeHtml } from "./html.js";
 import { routeToOutputPath } from "./paths.js";
 import { renderPlaygroundScript } from "./playground.js";
+import { getRedirects, getSeoConfig, renderRedirectHtml, renderRedirectsFile, renderRobotsTxt, renderSeoHead, renderSitemapXml, renderVercelRedirectsJson } from "./seo.js";
 import type { SiteManifest, SiteRoute } from "./manifest.js";
 
 export interface StaticRenderOptions {
@@ -11,12 +12,35 @@ export interface StaticRenderOptions {
 }
 
 export async function renderStaticSite(manifest: SiteManifest, options: StaticRenderOptions): Promise<void> {
+  await mkdir(options.outDir, { recursive: true });
   for (const route of manifest.routes) {
     const html = renderRoute(manifest, route);
     assertHtmlBudget(html, options.htmlBudgetBytes ?? 200_000, route.route);
     const outputPath = join(options.outDir, ...routeToOutputPath(route.route));
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(outputPath, html);
+  }
+
+  const seo = getSeoConfig(manifest.config);
+  const redirects = getRedirects(manifest.config);
+
+  if (seo.sitemap && manifest.config.site.url) {
+    await writeFile(join(options.outDir, "sitemap.xml"), renderSitemapXml(manifest));
+  }
+
+  if (seo.robots.enabled) {
+    await writeFile(join(options.outDir, "robots.txt"), renderRobotsTxt(manifest));
+  }
+
+  if (redirects.length > 0) {
+    await writeFile(join(options.outDir, "_redirects"), renderRedirectsFile(redirects));
+    await writeFile(join(options.outDir, "vercel.json"), renderVercelRedirectsJson(redirects));
+
+    for (const redirect of redirects) {
+      const outputPath = join(options.outDir, ...routeToOutputPath(redirect.from));
+      await mkdir(dirname(outputPath), { recursive: true });
+      await writeFile(outputPath, renderRedirectHtml(manifest, redirect));
+    }
   }
 }
 
@@ -34,8 +58,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escapeHtml(route.title)} | ${escapeHtml(manifest.config.site.name)}</title>
-  <meta name="description" content="${escapeHtml(route.description)}">
+  ${renderSeoHead(manifest, route)}
   <style>
     :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
     body { margin: 0; display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }

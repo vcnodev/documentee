@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { loadOpenApiSpec, normalizeOperations, type ApiOperation } from "@documentee/openapi";
 import type { DocumenteeConfig } from "./config.js";
-import type { ContentPage } from "./content.js";
+import type { ContentPage, PageSeo } from "./content.js";
 import { loadContentPages } from "./content.js";
 
 export type RouteKind = "page" | "api-operation" | "schema";
@@ -18,6 +18,7 @@ export interface SiteRoute {
   description: string;
   html: string;
   markdown: string;
+  seo?: PageSeo;
   operation?: ApiOperation;
   schema?: SchemaReference;
 }
@@ -48,6 +49,7 @@ export async function buildManifest(projectRoot: string, config: DocumenteeConfi
       description: page.description,
       html: page.html,
       markdown: page.markdown,
+      seo: page.seo,
     })),
     ...operations.map((operation): SiteRoute => ({
       kind: "api-operation",

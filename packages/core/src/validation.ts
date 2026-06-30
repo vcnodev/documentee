@@ -5,6 +5,7 @@ export function validateManifest(manifest: SiteManifest): string[] {
     ...validateDuplicateRoutes(manifest),
     ...validateNavigationTargets(manifest),
     ...validateInternalLinks(manifest),
+    ...validateRedirects(manifest),
   ];
 }
 
@@ -49,6 +50,14 @@ function validateInternalLinks(manifest: SiteManifest): string[] {
   }
 
   return diagnostics;
+}
+
+function validateRedirects(manifest: SiteManifest): string[] {
+  const routeSet = new Set(manifest.routes.map((route) => route.route));
+  return (manifest.config.redirects ?? [])
+    .map((redirect) => normalizeInternalLink(redirect.from))
+    .filter((from) => routeSet.has(from))
+    .map((from) => `Redirect source conflicts with generated route: ${from}`);
 }
 
 function internalLinks(markdown: string): string[] {

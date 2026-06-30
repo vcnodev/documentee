@@ -53,6 +53,12 @@ components:
           },
         ],
       },
+      seo: {
+        sitemap: true,
+        robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        twitterCard: "summary_large_image",
+      },
+      redirects: [],
       search: { provider: "none" },
       theme: { darkMode: true },
     };

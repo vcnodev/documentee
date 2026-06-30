@@ -31,3 +31,7 @@
 - Added implementation plan `docs/superpowers/plans/2026-07-01-browser-api-playground.md`.
 - Implemented opt-in OpenAPI playground config, operation playground metadata, static try-it UI, inline browser fetch script, example playground config, and generated API page checks.
 - Verification for Browser API playground passed: red-green focused tests, `pnpm test` (22 files, 42 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated try-it markup inspection, no-script home-page check, and unfinished-marker scan.
+- Started sitemap, redirects, robots, and SEO metadata goal and committed design spec `docs/superpowers/specs/2026-07-01-seo-assets-design.md`.
+- Added implementation plan `docs/superpowers/plans/2026-07-01-seo-assets.md`.
+- Implemented SEO config, redirect config, page SEO frontmatter, route metadata rendering, sitemap/robots generation, redirect fallback pages, `_redirects`, Vercel redirect artifact, and redirect conflict validation.
+- Verification for sitemap/redirects/robots/SEO passed: red-green focused tests, `pnpm test` (23 files, 52 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated artifact inspection, and unfinished-marker scan.

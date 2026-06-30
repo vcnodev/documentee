@@ -19,6 +19,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 | 11 | complete | Continue next steps 1-9: git baseline, package READMEs, Astro project output, MDX components, API UI, Next examples, deploy templates, migrations, contributor docs |
 | 12 | complete | Complete richer MDX components beyond Callout, Steps, Tabs, and CodeGroup |
 | 13 | complete | Complete Browser API playground / try-it UI |
+| 14 | complete | Complete sitemap, redirects, robots, and SEO metadata |
 
 ## Decisions
 - Product direction: open-source docs generator, not hosted SaaS for v1.
@@ -31,6 +32,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 - Next-steps goal: close the listed items 1-9 from the user's latest request.
 - Richer MDX components goal: add static no-client-JS authoring primitives for cards, accordions, fields, frames, icons, and badges.
 - Browser API playground goal: add an opt-in first-party try-it UI for generated OpenAPI operation pages, with no proxy and clear CORS/auth constraints.
+- SEO assets goal: add sitemap, robots, redirect artifacts, redirect fallback pages, and route-level metadata to static builds.
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
