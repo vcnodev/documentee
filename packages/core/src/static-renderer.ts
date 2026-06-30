@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { escapeHtml } from "./html.js";
 import { routeToOutputPath } from "./paths.js";
+import { renderPlaygroundScript } from "./playground.js";
 import type { SiteManifest, SiteRoute } from "./manifest.js";
 
 export interface StaticRenderOptions {
@@ -26,6 +27,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
       ? renderSchema(route)
       : route.html;
   const nav = renderNavigation(manifest);
+  const script = route.operation?.playground?.enabled ? renderPlaygroundScript() : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -68,6 +70,15 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-frame { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; padding: 12px; }
     .doc-frame img { display: block; height: auto; max-width: 100%; }
     .doc-frame figcaption { color: #52525b; font-size: 13px; margin-top: 10px; }
+    .api-playground { border: 1px solid #d4d4d8; border-radius: 8px; margin-top: 28px; padding: 18px; }
+    .api-playground form { display: grid; gap: 16px; }
+    .api-playground fieldset { border: 1px solid #e4e4e7; border-radius: 8px; display: grid; gap: 10px; margin: 0; padding: 14px; }
+    .api-playground label { display: grid; gap: 6px; font-weight: 700; }
+    .api-playground input, .api-playground select, .api-playground textarea { border: 1px solid #d4d4d8; border-radius: 6px; font: inherit; padding: 8px 10px; }
+    .api-playground textarea { min-height: 120px; }
+    .api-playground button { border: 1px solid #18181b; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 12px; width: fit-content; }
+    .api-playground pre { border: 1px solid #d4d4d8; border-radius: 8px; margin: 0; min-height: 80px; overflow: auto; padding: 12px; white-space: pre-wrap; }
+    .api-playground-note { color: #52525b; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -78,6 +89,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   <main>
     ${body}
   </main>
+  ${script}
 </body>
 </html>
 `;
@@ -140,6 +152,7 @@ function renderApiOperation(route: SiteRoute): string {
   const codeSamples = operation.codeSamples.length > 0
     ? `<section><h2>Code Samples</h2>${operation.codeSamples.map((sample) => `<figure><figcaption>${escapeHtml(sample.lang)}</figcaption><pre><code>${escapeHtml(sample.source)}</code></pre></figure>`).join("")}</section>`
     : "";
+  const playground = renderApiPlayground(route);
 
   return `<article>
   <h1><span class="method">${escapeHtml(operation.method)}</span> <span class="path">${escapeHtml(operation.path)}</span></h1>
@@ -152,7 +165,74 @@ function renderApiOperation(route: SiteRoute): string {
   ${requestBody}
   ${responses}
   ${codeSamples}
+  ${playground}
 </article>`;
+}
+
+function renderApiPlayground(route: SiteRoute): string {
+  const operation = route.operation;
+  const playground = operation?.playground;
+  if (!operation || !playground?.enabled) return "";
+
+  const pathParams = renderParameterInputs(operation.parameters.filter((parameter) => parameter.location === "path"), "Path Parameters");
+  const queryParams = renderParameterInputs(operation.parameters.filter((parameter) => parameter.location === "query"), "Query Parameters");
+  const headerParams = renderParameterInputs(operation.parameters.filter((parameter) => parameter.location === "header"), "Header Parameters");
+  const auth = renderPlaygroundAuth(playground);
+  const body = operation.requestBody ? renderPlaygroundBody(operation.requestBody.mediaTypes) : "";
+
+  return `<section class="api-playground">
+  <h2>Try It</h2>
+  <form data-documentee-playground data-method="${escapeHtml(operation.method)}" data-path="${escapeHtml(operation.path)}" data-auth="${escapeHtml(playground.auth)}" data-api-key-name="${escapeHtml(playground.apiKeyName ?? "")}" data-api-key-location="${escapeHtml(playground.apiKeyLocation)}">
+    <label>Base URL
+      <input name="baseUrl" value="${escapeHtml(playground.baseUrl ?? "")}" required>
+    </label>
+    <p><span class="method">${escapeHtml(operation.method)}</span> <span class="path">${escapeHtml(operation.path)}</span></p>
+    ${pathParams}
+    ${queryParams}
+    ${headerParams}
+    ${auth}
+    ${body}
+    <p class="api-playground-note">Browser requests depend on this API's CORS policy. Secrets are only kept in this form and are not stored by Documentee.</p>
+    <button type="submit" data-playground-submit>Send Request</button>
+    <pre data-playground-result aria-live="polite">Response output will appear here.</pre>
+  </form>
+</section>`;
+}
+
+function renderParameterInputs(parameters: Array<{ name: string; location: string; required: boolean }>, title: string): string {
+  if (parameters.length === 0) return "";
+  return `<fieldset>
+  <legend>${escapeHtml(title)}</legend>
+  ${parameters.map((parameter) => `<label>${escapeHtml(parameter.name)}${parameter.required ? " *" : ""}
+    <input name="${escapeHtml(parameter.name)}" data-param-location="${escapeHtml(parameter.location)}"${parameter.required ? " required" : ""}>
+  </label>`).join("\n  ")}
+</fieldset>`;
+}
+
+function renderPlaygroundAuth(playground: NonNullable<NonNullable<SiteRoute["operation"]>["playground"]>): string {
+  if (playground.auth === "none") return "";
+  const label = playground.auth === "bearer" ? "Bearer Token" : `API Key${playground.apiKeyName ? ` (${playground.apiKeyName})` : ""}`;
+  return `<fieldset>
+  <legend>Authentication</legend>
+  <label>${escapeHtml(label)}
+    <input name="documenteeAuth" type="password" autocomplete="off">
+  </label>
+</fieldset>`;
+}
+
+function renderPlaygroundBody(mediaTypes: string[]): string {
+  const options = (mediaTypes.length > 0 ? mediaTypes : ["application/json"])
+    .map((mediaType) => `<option value="${escapeHtml(mediaType)}">${escapeHtml(mediaType)}</option>`)
+    .join("");
+  return `<fieldset>
+  <legend>Request Body</legend>
+  <label>Media Type
+    <select name="mediaType">${options}</select>
+  </label>
+  <label>Body
+    <textarea name="body" spellcheck="false"></textarea>
+  </label>
+</fieldset>`;
 }
 
 function renderSchema(route: SiteRoute): string {

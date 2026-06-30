@@ -103,7 +103,7 @@ Behavior:
 
 - Finds forms using `data-documentee-playground`.
 - Reads operation metadata from `data-*` attributes.
-- Encodes path parameters into `{param}` placeholders.
+- Encodes path parameters into `{param}` path tokens.
 - Adds query parameters with `URLSearchParams`.
 - Adds header parameters.
 - Adds bearer or API key auth if configured.

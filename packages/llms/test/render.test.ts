@@ -9,7 +9,16 @@ describe("LLM text renderers", () => {
         site: { name: "Acme Docs", description: "Docs for Acme" },
         content: { directory: "docs" },
         navigation: [],
-        openapi: { specs: [{ id: "core", source: "./api/openapi.yaml", routeBase: "/api-reference" }] },
+        openapi: {
+          specs: [
+            {
+              id: "core",
+              source: "./api/openapi.yaml",
+              routeBase: "/api-reference",
+              playground: { enabled: false, auth: "none", apiKeyLocation: "header" },
+            },
+          ],
+        },
         search: { provider: "none" },
         theme: { darkMode: true },
       },

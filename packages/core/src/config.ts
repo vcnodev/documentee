@@ -9,11 +9,24 @@ const navigationPageSchema = z.object({
   openapi: z.string().optional(),
 });
 
+const playgroundSchema = z.object({
+  enabled: z.boolean().default(false),
+  baseUrl: z.string().url().optional(),
+  auth: z.enum(["none", "bearer", "apiKey"]).default("none"),
+  apiKeyName: z.string().min(1).optional(),
+  apiKeyLocation: z.enum(["header", "query"]).default("header"),
+}).default({
+  enabled: false,
+  auth: "none",
+  apiKeyLocation: "header",
+});
+
 const openApiSpecSchema = z.object({
   id: z.string().min(1),
   name: z.string().optional(),
   source: z.string().min(1),
   routeBase: z.string().min(1).default("/api-reference"),
+  playground: playgroundSchema,
 });
 
 const configSchema = z.object({

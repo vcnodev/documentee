@@ -21,7 +21,48 @@ describe("loadConfig", () => {
     expect(config.site.name).toBe("Acme Docs");
     expect(config.content.directory).toBe("docs");
     expect(config.openapi.specs[0].id).toBe("core");
+    expect(config.openapi.specs[0].playground).toEqual({
+      enabled: false,
+      auth: "none",
+      apiKeyLocation: "header",
+    });
     expect(config.search.provider).toBe("none");
+  });
+
+  it("loads OpenAPI playground settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        openapi: {
+          specs: [
+            {
+              id: "core",
+              source: "./api/openapi.yaml",
+              routeBase: "/api-reference",
+              playground: {
+                enabled: true,
+                baseUrl: "https://api.acme.test",
+                auth: "apiKey",
+                apiKeyName: "x-api-key",
+                apiKeyLocation: "header",
+              },
+            },
+          ],
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.openapi.specs[0].playground).toEqual({
+      enabled: true,
+      baseUrl: "https://api.acme.test",
+      auth: "apiKey",
+      apiKeyName: "x-api-key",
+      apiKeyLocation: "header",
+    });
   });
 
   it("rejects duplicate OpenAPI spec ids", async () => {

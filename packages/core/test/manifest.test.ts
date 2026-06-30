@@ -43,7 +43,16 @@ components:
       site: { name: "Acme", description: "" },
       content: { directory: "docs" },
       navigation: [],
-      openapi: { specs: [{ id: "core", source: "./api/openapi.yaml", routeBase: "/api-reference" }] },
+      openapi: {
+        specs: [
+          {
+            id: "core",
+            source: "./api/openapi.yaml",
+            routeBase: "/api-reference",
+            playground: { enabled: false, auth: "none", apiKeyLocation: "header" },
+          },
+        ],
+      },
       search: { provider: "none" },
       theme: { darkMode: true },
     };

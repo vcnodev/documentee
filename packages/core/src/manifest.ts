@@ -35,7 +35,9 @@ export async function buildManifest(projectRoot: string, config: DocumenteeConfi
 
   for (const specConfig of config.openapi.specs) {
     const spec = await loadOpenApiSpec(resolve(projectRoot, specConfig.source));
-    operations.push(...normalizeOperations(specConfig.id, specConfig.routeBase, spec));
+    operations.push(...normalizeOperations(specConfig.id, specConfig.routeBase, spec, {
+      playground: specConfig.playground,
+    }));
   }
 
   const routes: SiteRoute[] = [

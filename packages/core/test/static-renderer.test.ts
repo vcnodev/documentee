@@ -161,4 +161,116 @@ describe("static renderer", () => {
     expect(html).toContain(".doc-field");
     expect(html).toContain(".doc-frame");
   });
+
+  it("renders browser API playground UI and script for enabled operations", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "api-operation",
+          route: "/api-reference/create-message",
+          title: "POST /messages/{id}",
+          description: "Create a message",
+          html: "",
+          markdown: "",
+          operation: {
+            specId: "core",
+            method: "POST",
+            path: "/messages/{id}",
+            slug: "create-message",
+            route: "/api-reference/create-message",
+            summary: "Create a message",
+            tags: ["Messages"],
+            deprecated: false,
+            beta: false,
+            auth: ["bearerAuth"],
+            parameters: [
+              { name: "id", location: "path", required: true },
+              { name: "preview", location: "query", required: false },
+              { name: "x-trace-id", location: "header", required: false },
+            ],
+            requestBody: { required: true, mediaTypes: ["application/json"], schemaRefs: [] },
+            responses: [{ status: "201", description: "Created", mediaTypes: ["application/json"], schemaRefs: [] }],
+            codeSamples: [],
+            playground: {
+              enabled: true,
+              baseUrl: "https://api.acme.test",
+              auth: "bearer",
+              apiKeyLocation: "header",
+            },
+          },
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("Try It");
+    expect(html).toContain("data-documentee-playground");
+    expect(html).toContain('data-method="POST"');
+    expect(html).toContain('data-path="/messages/{id}"');
+    expect(html).toContain('name="id"');
+    expect(html).toContain('name="preview"');
+    expect(html).toContain('name="x-trace-id"');
+    expect(html).toContain('name="documenteeAuth"');
+    expect(html).toContain('name="mediaType"');
+    expect(html).toContain('name="body"');
+    expect(html).toContain("Browser requests depend on this API's CORS policy");
+    expect(html).toContain("<script>");
+    expect(html).toContain("fetch");
+  });
+
+  it("omits browser API playground UI and script when disabled", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "api-operation",
+          route: "/api-reference/list-messages",
+          title: "GET /messages",
+          description: "List messages",
+          html: "",
+          markdown: "",
+          operation: {
+            specId: "core",
+            method: "GET",
+            path: "/messages",
+            slug: "list-messages",
+            route: "/api-reference/list-messages",
+            summary: "List messages",
+            tags: ["Messages"],
+            deprecated: false,
+            beta: false,
+            auth: [],
+            parameters: [],
+            responses: [{ status: "200", description: "OK", mediaTypes: ["application/json"], schemaRefs: [] }],
+            codeSamples: [],
+          },
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).not.toContain("data-documentee-playground");
+    expect(html).not.toContain("<script>");
+  });
 });

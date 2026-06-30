@@ -15,6 +15,7 @@ Implemented:
 - Markdown/MDX page discovery
 - OpenAPI 3.x YAML/JSON loading
 - compact API operation route generation with auth, parameters, request body, responses, and schema-reference links
+- opt-in browser API playground / try-it UI for generated OpenAPI operation pages
 - static HTML output
 - Pagefind indexing for static builds when `search.provider` is `pagefind`
 - `llms.txt` and `llms-full.txt`
@@ -32,7 +33,6 @@ Implemented:
 
 Planned next:
 
-- browser API playground
 - deeper theme customization
 - richer migration compatibility for framework-specific MDX components
 

@@ -32,6 +32,17 @@ export interface ApiParameter {
   schemaRef?: string;
 }
 
+export type ApiPlaygroundAuth = "none" | "bearer" | "apiKey";
+export type ApiPlaygroundApiKeyLocation = "header" | "query";
+
+export interface ApiPlayground {
+  enabled: boolean;
+  baseUrl?: string;
+  auth: ApiPlaygroundAuth;
+  apiKeyName?: string;
+  apiKeyLocation: ApiPlaygroundApiKeyLocation;
+}
+
 export interface ApiRequestBody {
   required: boolean;
   mediaTypes: string[];
@@ -67,4 +78,5 @@ export interface ApiOperation {
   requestBody?: ApiRequestBody;
   responses: ApiResponse[];
   codeSamples: ApiCodeSample[];
+  playground?: ApiPlayground;
 }

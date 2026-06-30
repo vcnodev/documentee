@@ -27,3 +27,7 @@
 - Started richer MDX components goal covering static no-client-JS cards, accordions, fields, frames, icons, and badges.
 - Implemented richer MDX component transforms for `Accordion`, `AccordionGroup`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`, plus default static renderer styles and an example components page.
 - Verification for richer MDX components passed: focused red-green tests, `pnpm test` (21 files, 36 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated components-route markup inspection, and no-script spot check.
+- Started Browser API playground goal and committed design spec `docs/superpowers/specs/2026-07-01-browser-api-playground-design.md`.
+- Added implementation plan `docs/superpowers/plans/2026-07-01-browser-api-playground.md`.
+- Implemented opt-in OpenAPI playground config, operation playground metadata, static try-it UI, inline browser fetch script, example playground config, and generated API page checks.
+- Verification for Browser API playground passed: red-green focused tests, `pnpm test` (22 files, 42 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated try-it markup inspection, no-script home-page check, and unfinished-marker scan.

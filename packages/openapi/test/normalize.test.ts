@@ -118,4 +118,73 @@ describe("normalizeOperations", () => {
     expect(operation.codeSamples).toEqual([{ lang: "curl", source: "curl https://api.acme.test/messages/id" }]);
     expect(JSON.stringify(operation)).not.toContain("properties");
   });
+
+  it("attaches enabled playground metadata with configured base URL", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.1.0",
+      info: { title: "Acme", version: "1.0.0" },
+      servers: [{ url: "https://fallback.acme.test" }],
+      paths: {
+        "/messages/{id}": {
+          post: {
+            operationId: "createMessage",
+            parameters: [
+              { name: "id", in: "path", required: true, schema: { type: "string" } },
+              { name: "preview", in: "query", schema: { type: "boolean" } },
+              { name: "x-trace-id", in: "header", schema: { type: "string" } },
+            ],
+            requestBody: {
+              required: true,
+              content: { "application/json": { schema: { type: "object" } } },
+            },
+            responses: { "201": { description: "Created" } },
+          },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec, {
+      playground: {
+        enabled: true,
+        baseUrl: "https://api.acme.test",
+        auth: "bearer",
+        apiKeyLocation: "header",
+      },
+    });
+
+    expect(operation.playground).toEqual({
+      enabled: true,
+      baseUrl: "https://api.acme.test",
+      auth: "bearer",
+      apiKeyLocation: "header",
+    });
+    expect(operation.parameters).toContainEqual({ name: "x-trace-id", location: "header", required: false, schemaRef: undefined });
+    expect(operation.requestBody?.required).toBe(true);
+  });
+
+  it("uses the first OpenAPI server URL as playground base URL when no override is configured", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.1.0",
+      info: { title: "Acme", version: "1.0.0" },
+      servers: [{ url: "https://api.acme.test" }],
+      paths: {
+        "/messages": {
+          get: {
+            operationId: "listMessages",
+            responses: { "200": { description: "OK" } },
+          },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec, {
+      playground: {
+        enabled: true,
+        auth: "none",
+        apiKeyLocation: "header",
+      },
+    });
+
+    expect(operation.playground?.baseUrl).toBe("https://api.acme.test");
+  });
 });

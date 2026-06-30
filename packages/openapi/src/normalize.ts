@@ -1,9 +1,19 @@
-import type { ApiCodeSample, ApiOperation, ApiParameter, ApiRequestBody, ApiResponse, OpenApiDocument, OpenApiOperation } from "./types.js";
+import type { ApiCodeSample, ApiOperation, ApiParameter, ApiPlayground, ApiRequestBody, ApiResponse, OpenApiDocument, OpenApiOperation } from "./types.js";
 
 const METHODS = new Set(["get", "put", "post", "delete", "patch", "options", "head", "trace"]);
 
-export function normalizeOperations(specId: string, routeBase: string, spec: OpenApiDocument): ApiOperation[] {
+export interface NormalizeOperationOptions {
+  playground?: ApiPlayground;
+}
+
+export function normalizeOperations(
+  specId: string,
+  routeBase: string,
+  spec: OpenApiDocument,
+  options: NormalizeOperationOptions = {},
+): ApiOperation[] {
   const operations: ApiOperation[] = [];
+  const playground = normalizePlayground(options.playground, spec);
 
   for (const [path, pathItem] of Object.entries(spec.paths)) {
     if (!isRecord(pathItem)) continue;
@@ -31,11 +41,20 @@ export function normalizeOperations(specId: string, routeBase: string, spec: Ope
         requestBody: normalizeRequestBody(normalized.requestBody),
         responses: normalizeResponses(normalized.responses),
         codeSamples: normalizeCodeSamples(normalized["x-codeSamples"]),
+        playground,
       });
     }
   }
 
   return operations.sort((a, b) => a.route.localeCompare(b.route));
+}
+
+function normalizePlayground(playground: ApiPlayground | undefined, spec: OpenApiDocument): ApiPlayground | undefined {
+  if (!playground?.enabled) return undefined;
+  return {
+    ...playground,
+    baseUrl: playground.baseUrl ?? firstServerUrl(spec),
+  };
 }
 
 function normalizeCodeSamples(samples: unknown): ApiCodeSample[] {
@@ -112,6 +131,10 @@ function unique(values: string[]): string[] {
 
 function stringValue(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
+}
+
+function firstServerUrl(spec: OpenApiDocument): string | undefined {
+  return spec.servers?.find((server) => typeof server.url === "string" && server.url.length > 0)?.url;
 }
 
 export function createOperationSlug(method: string, path: string, operationId?: string): string {

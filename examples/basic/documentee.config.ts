@@ -17,6 +17,11 @@ export default {
         name: "Core API",
         source: "./api/openapi.yaml",
         routeBase: "/api-reference",
+        playground: {
+          enabled: true,
+          baseUrl: "https://api.acme.test",
+          auth: "bearer",
+        },
       },
     ],
   },
