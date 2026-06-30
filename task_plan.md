@@ -20,6 +20,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 | 12 | complete | Complete richer MDX components beyond Callout, Steps, Tabs, and CodeGroup |
 | 13 | complete | Complete Browser API playground / try-it UI |
 | 14 | complete | Complete sitemap, redirects, robots, and SEO metadata |
+| 15 | complete | Complete stronger Next.js no-client-JS regression tests against real fixture apps |
 
 ## Decisions
 - Product direction: open-source docs generator, not hosted SaaS for v1.
@@ -33,6 +34,7 @@ Build Documentee's initial OSS docs-generator implementation from the research g
 - Richer MDX components goal: add static no-client-JS authoring primitives for cards, accordions, fields, frames, icons, and badges.
 - Browser API playground goal: add an opt-in first-party try-it UI for generated OpenAPI operation pages, with no proxy and clear CORS/auth constraints.
 - SEO assets goal: add sitemap, robots, redirect artifacts, redirect fallback pages, and route-level metadata to static builds.
+- Next no-client-JS fixture goal: generate real App Router and Pages Router fixture apps and audit source plus server-rendered Documentee HTML snapshots.
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

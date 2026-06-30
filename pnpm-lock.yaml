@@ -153,6 +153,9 @@ importers:
       '@documentee/core':
         specifier: workspace:*
         version: link:../core
+      '@documentee/react':
+        specifier: workspace:*
+        version: link:../react
     devDependencies:
       typescript:
         specifier: ^5.5.4

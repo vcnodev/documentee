@@ -35,3 +35,7 @@
 - Added implementation plan `docs/superpowers/plans/2026-07-01-seo-assets.md`.
 - Implemented SEO config, redirect config, page SEO frontmatter, route metadata rendering, sitemap/robots generation, redirect fallback pages, `_redirects`, Vercel redirect artifact, and redirect conflict validation.
 - Verification for sitemap/redirects/robots/SEO passed: red-green focused tests, `pnpm test` (23 files, 52 tests), `pnpm typecheck`, `pnpm build`, CLI validate/build for `examples/basic`, generated artifact inspection, and unfinished-marker scan.
+- Started stronger Next.js no-client-JS regression goal and committed design spec `docs/superpowers/specs/2026-07-01-next-no-client-js-fixtures-design.md`.
+- Added implementation plan `docs/superpowers/plans/2026-07-01-next-no-client-js-fixtures.md`.
+- Implemented Next.js no-client-JS fixture harness with generated App Router and Pages Router apps, source audits, server-rendered Documentee HTML snapshot audits, route budgets, and optional `DOCUMENTEE_RUN_NEXT_FIXTURE_BUILD=1` build hook.
+- Verification for Next no-client-JS fixtures passed: red-green fixture tests, focused renderer-next tests, `pnpm test` (24 files, 57 tests), `pnpm typecheck`, `pnpm build`, and unfinished-marker scan.

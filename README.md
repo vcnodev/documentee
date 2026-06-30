@@ -25,6 +25,7 @@ Implemented:
 - Astro renderer route scaffold
 - React server-rendered HTML spike
 - Next.js App Router and Pages Router adapter metadata spike with small HTML/no Documentee client JS checks
+- generated Next.js no-client-JS fixture app regression tests
 - generated Astro project shell
 - generated Next.js App Router and Pages Router examples
 - MDX-style transforms for `Callout`, `Steps`, `Tabs`, `CodeGroup`, `Accordion`, `AccordionGroup`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`

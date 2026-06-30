@@ -9,5 +9,6 @@ Policy:
 - Split large references into operation, schema, example, and search-result routes.
 - Keep route-level HTML payload budgets in tests.
 - Prefer stable links between small pages over one large all-in-one API document.
+- Test real generated Next.js App Router and Pages Router fixture apps, then audit generated source and server-rendered Documentee HTML snapshots for client JavaScript regressions.
 
 The practical goal is small HTML with no Documentee client JavaScript.
