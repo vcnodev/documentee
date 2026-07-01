@@ -9,6 +9,7 @@ export interface OpenApiDocument {
   components?: Record<string, unknown>;
   servers?: Array<{ url: string; description?: string }>;
   tags?: Array<{ name: string; description?: string }>;
+  security?: Array<Record<string, unknown>>;
 }
 
 export interface OpenApiOperation {

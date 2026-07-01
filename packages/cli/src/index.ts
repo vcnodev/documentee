@@ -3,6 +3,7 @@ import { buildCommand } from "./commands/build.js";
 import { devCommand } from "./commands/dev.js";
 import { initCommand } from "./commands/init.js";
 import { migrateCommand, type MigrationSource } from "./commands/migrate.js";
+import { previewCommand } from "./commands/preview.js";
 import { validateCommand } from "./commands/validate.js";
 import { resolve } from "node:path";
 
@@ -10,6 +11,7 @@ export { buildCommand } from "./commands/build.js";
 export { devCommand } from "./commands/dev.js";
 export { initCommand } from "./commands/init.js";
 export { migrateCommand } from "./commands/migrate.js";
+export { previewCommand } from "./commands/preview.js";
 export { validateCommand } from "./commands/validate.js";
 
 export async function runCli(argv: string[]): Promise<void> {
@@ -45,6 +47,21 @@ export async function runCli(argv: string[]): Promise<void> {
     const address = server.address();
     const boundPort = typeof address === "object" && address ? address.port : port;
     console.log(`Documentee dev server running at http://127.0.0.1:${boundPort}`);
+    return;
+  }
+
+  if (command === "preview") {
+    if (!projectRoot) throw new Error("Usage: documentee preview <project> --out <dir> --port <port>");
+    const outIndex = rest.indexOf("--out");
+    const outDir = outIndex >= 0 ? rest[outIndex + 1] : "dist";
+    const portIndex = rest.indexOf("--port");
+    const port = portIndex >= 0 ? Number(rest[portIndex + 1]) : 3000;
+    if (!outDir) throw new Error("Usage: documentee preview <project> --out <dir> --port <port>");
+    if (!Number.isInteger(port) || port < 0) throw new Error("Port must be a non-negative integer");
+    const server = await previewCommand(resolveCliPath(projectRoot), { outDir: resolveCliPath(outDir), port });
+    const address = server.address();
+    const boundPort = typeof address === "object" && address ? address.port : port;
+    console.log(`Documentee preview server running at http://127.0.0.1:${boundPort}`);
     return;
   }
 

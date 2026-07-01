@@ -55,6 +55,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   const nav = renderNavigation(manifest);
   const versions = renderVersionSwitcher(manifest);
   const script = route.operation?.playground?.enabled ? renderPlaygroundScript() : "";
+  const theme = renderThemeCss(manifest);
 
   return `<!doctype html>
 <html lang="en">
@@ -63,55 +64,57 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   ${renderSeoHead(manifest, route)}
   <style>
-    :root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-    body { margin: 0; display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-    nav { border-right: 1px solid #d4d4d8; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+    ${theme.variables}
+    body { background: var(--doc-background); color: var(--doc-text); margin: 0; display: grid; grid-template-columns: var(--doc-nav-width) 1fr; min-height: 100vh; }
+    nav { border-right: 1px solid var(--doc-border); padding: 24px; display: flex; flex-direction: column; gap: 10px; }
     main { max-width: 880px; padding: 40px; }
-    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code, pre { background: var(--doc-code-background); font-family: var(--doc-code-font-family); }
     .method { font-weight: 700; }
-    .path { color: #52525b; }
-    .doc-badge, .badge { border: 1px solid #d4d4d8; border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; }
+    .path { color: var(--doc-muted-text); }
+    a { color: var(--doc-primary); }
+    .doc-badge, .badge { border: 1px solid var(--doc-border); border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; }
     .doc-badge-success { border-color: #16a34a; color: #166534; }
     .doc-badge-warning { border-color: #f59e0b; color: #92400e; }
     .doc-badge-danger { border-color: #dc2626; color: #991b1b; }
-    .doc-icon { align-items: center; border: 1px solid #d4d4d8; border-radius: 6px; display: inline-flex; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; height: 24px; justify-content: center; min-width: 24px; padding: 0 4px; }
+    .doc-icon { align-items: center; border: 1px solid var(--doc-border); border-radius: 6px; display: inline-flex; font-family: var(--doc-code-font-family); font-size: 12px; height: 24px; justify-content: center; min-width: 24px; padding: 0 4px; }
     .doc-card-group { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 20px 0; }
     .doc-card-group-1 { grid-template-columns: 1fr; }
     .doc-card-group-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
     .doc-card-group-3 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
-    .doc-card { border: 1px solid #d4d4d8; border-radius: 8px; color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; }
+    .doc-card { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; }
     .doc-card h3 { font-size: 16px; margin: 0 0 6px; }
-    .doc-card p { color: #52525b; margin: 0; }
+    .doc-card p { color: var(--doc-muted-text); margin: 0; }
     .doc-card-icon { flex: 0 0 auto; }
-    .doc-accordion-group { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; }
-    .doc-accordion { border-top: 1px solid #d4d4d8; padding: 0; }
+    .doc-accordion-group { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; overflow: hidden; }
+    .doc-accordion { border-top: 1px solid var(--doc-border); padding: 0; }
     .doc-accordion:first-child { border-top: 0; }
     .doc-accordion summary { cursor: pointer; font-weight: 700; padding: 14px 16px; }
-    .doc-accordion div { color: #52525b; padding: 0 16px 16px; }
-    .doc-field { border-left: 3px solid #18181b; margin: 16px 0; padding: 4px 0 4px 14px; }
+    .doc-accordion div { color: var(--doc-muted-text); padding: 0 16px 16px; }
+    .doc-field { border-left: 3px solid var(--doc-accent); margin: 16px 0; padding: 4px 0 4px 14px; }
     .doc-field div { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
-    .doc-field p { color: #52525b; margin: 6px 0 0; }
-    .doc-field-type, .doc-field-required { border: 1px solid #d4d4d8; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; padding: 2px 6px; }
+    .doc-field p { color: var(--doc-muted-text); margin: 6px 0 0; }
+    .doc-field-type, .doc-field-required { border: 1px solid var(--doc-border); border-radius: 6px; font-family: var(--doc-code-font-family); font-size: 12px; padding: 2px 6px; }
     .doc-field-required { color: #991b1b; }
-    .doc-frame { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; padding: 12px; }
+    .doc-frame { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; overflow: hidden; padding: 12px; }
     .doc-frame img { display: block; height: auto; max-width: 100%; }
-    .doc-frame figcaption { color: #52525b; font-size: 13px; margin-top: 10px; }
-    .version-switcher { border: 1px solid #d4d4d8; border-radius: 8px; display: grid; gap: 8px; margin: 8px 0 18px; padding: 12px; }
-    .version-switcher span { color: #52525b; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .doc-frame figcaption { color: var(--doc-muted-text); font-size: 13px; margin-top: 10px; }
+    .version-switcher { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); display: grid; gap: 8px; margin: 8px 0 18px; padding: 12px; }
+    .version-switcher span { color: var(--doc-muted-text); font-size: 12px; font-weight: 700; text-transform: uppercase; }
     .version-switcher a { color: inherit; text-decoration: none; }
     .api-portal-list { display: grid; gap: 14px; margin-top: 24px; }
-    .api-portal-spec { border: 1px solid #d4d4d8; border-radius: 8px; padding: 16px; }
+    .api-portal-spec { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); padding: 16px; }
     .api-portal-spec h2 { font-size: 18px; margin: 0 0 8px; }
-    .api-portal-spec p { color: #52525b; margin: 4px 0; }
-    .api-playground { border: 1px solid #d4d4d8; border-radius: 8px; margin-top: 28px; padding: 18px; }
+    .api-portal-spec p { color: var(--doc-muted-text); margin: 4px 0; }
+    .api-playground { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin-top: 28px; padding: 18px; }
     .api-playground form { display: grid; gap: 16px; }
     .api-playground fieldset { border: 1px solid #e4e4e7; border-radius: 8px; display: grid; gap: 10px; margin: 0; padding: 14px; }
     .api-playground label { display: grid; gap: 6px; font-weight: 700; }
-    .api-playground input, .api-playground select, .api-playground textarea { border: 1px solid #d4d4d8; border-radius: 6px; font: inherit; padding: 8px 10px; }
+    .api-playground input, .api-playground select, .api-playground textarea { border: 1px solid var(--doc-border); border-radius: 6px; font: inherit; padding: 8px 10px; }
     .api-playground textarea { min-height: 120px; }
-    .api-playground button { border: 1px solid #18181b; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 12px; width: fit-content; }
-    .api-playground pre { border: 1px solid #d4d4d8; border-radius: 8px; margin: 0; min-height: 80px; overflow: auto; padding: 12px; white-space: pre-wrap; }
-    .api-playground-note { color: #52525b; font-size: 14px; }
+    .api-playground button { border: 1px solid var(--doc-text); border-radius: 6px; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 12px; width: fit-content; }
+    .api-playground pre { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 0; min-height: 80px; overflow: auto; padding: 12px; white-space: pre-wrap; }
+    .api-playground-note { color: var(--doc-muted-text); font-size: 14px; }
+    ${theme.customCss}
   </style>
 </head>
 <body>
@@ -127,6 +130,34 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
 </body>
 </html>
 `;
+}
+
+function renderThemeCss(manifest: SiteManifest): { variables: string; customCss: string } {
+  const theme = manifest.config.theme;
+  const darkMode = theme.darkMode ? "light dark" : "light";
+  const values = {
+    "--doc-primary": theme.primaryColor ?? "#18181b",
+    "--doc-accent": theme.accentColor ?? theme.primaryColor ?? "#18181b",
+    "--doc-background": theme.backgroundColor ?? "Canvas",
+    "--doc-text": theme.textColor ?? "CanvasText",
+    "--doc-muted-text": theme.mutedTextColor ?? "#52525b",
+    "--doc-border": theme.borderColor ?? "#d4d4d8",
+    "--doc-code-background": theme.codeBackgroundColor ?? "transparent",
+    "--doc-font-family": theme.fontFamily ?? "Inter, ui-sans-serif, system-ui, sans-serif",
+    "--doc-code-font-family": theme.codeFontFamily ?? "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    "--doc-radius": theme.radius ?? "8px",
+    "--doc-nav-width": theme.navWidth ?? "280px",
+  };
+  const variables = [
+    `:root { color-scheme: ${cssValue(darkMode)}; font-family: var(--doc-font-family);`,
+    ...Object.entries(values).map(([name, value]) => `      ${name}: ${cssValue(value)};`),
+    "    }",
+  ].join("\n");
+
+  return {
+    variables,
+    customCss: theme.customCss ? sanitizeStyleText(theme.customCss) : "",
+  };
 }
 
 function renderNavigation(manifest: SiteManifest): string {
@@ -340,4 +371,12 @@ function joinSchemaRoute(specId: string, schema: string): string {
 function normalizeRoute(route: string): string {
   const stripped = route.replace(/\/+$/g, "");
   return stripped.length === 0 ? "/" : stripped;
+}
+
+function cssValue(value: string): string {
+  return value.replace(/[<>{};]/g, "");
+}
+
+function sanitizeStyleText(value: string): string {
+  return value.replace(/<\/style/gi, "<\\/style");
 }

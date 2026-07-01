@@ -64,6 +64,10 @@ export default {
     { from: "/start", to: "/get-started/quickstart", status: 301 },
   ],
   theme: {
+    primaryColor: "#2563eb",
+    accentColor: "#0f766e",
+    navWidth: "300px",
+    radius: "8px",
     darkMode: true,
   },
 };

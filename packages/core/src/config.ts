@@ -79,6 +79,22 @@ const redirectSchema = z.object({
   status: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).default(301),
 });
 
+const themeSchema = z.object({
+  primaryColor: z.string().optional(),
+  accentColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  textColor: z.string().optional(),
+  mutedTextColor: z.string().optional(),
+  borderColor: z.string().optional(),
+  codeBackgroundColor: z.string().optional(),
+  fontFamily: z.string().optional(),
+  codeFontFamily: z.string().optional(),
+  radius: z.string().optional(),
+  navWidth: z.string().optional(),
+  customCss: z.string().optional(),
+  darkMode: z.boolean().default(true),
+}).default({ darkMode: true });
+
 const configSchema = z.object({
   site: z.object({
     name: z.string().min(1),
@@ -99,10 +115,7 @@ const configSchema = z.object({
   search: z.object({
     provider: z.enum(["none", "pagefind"]).default("none"),
   }).default({ provider: "none" }),
-  theme: z.object({
-    primaryColor: z.string().optional(),
-    darkMode: z.boolean().default(true),
-  }).default({ darkMode: true }),
+  theme: themeSchema,
 });
 
 const docsJsonSchema = z.object({
@@ -117,6 +130,7 @@ const docsJsonSchema = z.object({
   }).default({ specs: [] }),
   seo: seoSchema.optional(),
   redirects: z.array(redirectSchema).optional(),
+  theme: themeSchema.optional(),
   colors: z.object({
     primary: z.string().optional(),
   }).optional(),
@@ -180,8 +194,9 @@ function normalizeDocsJson(input: unknown): DocumenteeConfig {
     redirects: parsed.redirects ?? [],
     search: { provider: "none" },
     theme: {
-      primaryColor: parsed.colors?.primary,
-      darkMode: true,
+      ...parsed.theme,
+      primaryColor: parsed.theme?.primaryColor ?? parsed.colors?.primary,
+      darkMode: parsed.theme?.darkMode ?? true,
     },
   });
 }

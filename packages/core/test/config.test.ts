@@ -111,6 +111,65 @@ describe("loadConfig", () => {
     });
   });
 
+  it("loads deeper theme customization settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        theme: {
+          primaryColor: "#2563eb",
+          accentColor: "#0f766e",
+          backgroundColor: "#ffffff",
+          textColor: "#18181b",
+          mutedTextColor: "#52525b",
+          borderColor: "#d4d4d8",
+          codeBackgroundColor: "#f4f4f5",
+          fontFamily: "Inter",
+          codeFontFamily: "ui-monospace",
+          radius: "10px",
+          navWidth: "300px",
+          customCss: ".custom { color: red; }",
+          darkMode: false,
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.theme).toMatchObject({
+      primaryColor: "#2563eb",
+      accentColor: "#0f766e",
+      backgroundColor: "#ffffff",
+      textColor: "#18181b",
+      mutedTextColor: "#52525b",
+      borderColor: "#d4d4d8",
+      codeBackgroundColor: "#f4f4f5",
+      fontFamily: "Inter",
+      codeFontFamily: "ui-monospace",
+      radius: "10px",
+      navWidth: "300px",
+      customCss: ".custom { color: red; }",
+      darkMode: false,
+    });
+  });
+
+  it("maps docs.json colors.primary into theme primaryColor", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        colors: { primary: "#14b8a6" },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.theme.primaryColor).toBe("#14b8a6");
+    expect(config.theme.darkMode).toBe(true);
+  });
+
   it("loads versioned docs and OpenAPI spec version ownership", async () => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(

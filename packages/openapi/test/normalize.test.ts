@@ -187,4 +187,120 @@ describe("normalizeOperations", () => {
 
     expect(operation.playground?.baseUrl).toBe("https://api.acme.test");
   });
+
+  it("normalizes OpenAPI 3.0 component refs and root security compactly", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.0.3",
+      info: { title: "Acme", version: "1.0.0" },
+      security: [{ apiKeyAuth: [] }],
+      paths: {
+        "/messages": {
+          post: {
+            operationId: "createMessage",
+            parameters: [{ $ref: "#/components/parameters/TraceId" }],
+            requestBody: { $ref: "#/components/requestBodies/CreateMessageBody" },
+            responses: {
+              "201": { $ref: "#/components/responses/MessageCreated" },
+            },
+            "x-codeSamples": [
+              { language: "JavaScript", code: "fetch('/messages')" },
+            ],
+          },
+        },
+      },
+      components: {
+        parameters: {
+          TraceId: {
+            name: "traceId",
+            in: "header",
+            schema: { $ref: "#/components/schemas/TraceId" },
+          },
+        },
+        requestBodies: {
+          CreateMessageBody: {
+            required: true,
+            content: {
+              "application/json": { schema: { $ref: "#/components/schemas/CreateMessage" } },
+              "application/xml": { schema: { $ref: "#/components/schemas/CreateMessage" } },
+            },
+          },
+        },
+        responses: {
+          MessageCreated: {
+            description: "Created",
+            content: {
+              "application/json": { schema: { $ref: "#/components/schemas/Message" } },
+            },
+          },
+        },
+        schemas: {
+          TraceId: { type: "string", nullable: true },
+          CreateMessage: { type: "object" },
+          Message: { type: "object" },
+        },
+        securitySchemes: {
+          apiKeyAuth: { type: "apiKey", in: "header", name: "x-api-key" },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec);
+
+    expect(operation.auth).toEqual(["apiKeyAuth"]);
+    expect(operation.parameters).toEqual([
+      { name: "traceId", location: "header", required: false, schemaRef: "TraceId" },
+    ]);
+    expect(operation.requestBody).toEqual({
+      required: true,
+      mediaTypes: ["application/json", "application/xml"],
+      schemaRefs: ["CreateMessage"],
+    });
+    expect(operation.responses).toEqual([
+      { status: "201", description: "Created", mediaTypes: ["application/json"], schemaRefs: ["Message"] },
+    ]);
+    expect(operation.codeSamples).toEqual([{ lang: "JavaScript", source: "fetch('/messages')" }]);
+    expect(JSON.stringify(operation)).not.toContain("nullable");
+  });
+
+  it("normalizes OpenAPI 3.1 composed schemas by reference name", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.1.0",
+      info: { title: "Acme", version: "1.0.0" },
+      paths: {
+        "/search": {
+          get: {
+            operationId: "search",
+            responses: {
+              "200": {
+                description: "OK",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/SearchResult" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          SearchResult: {
+            oneOf: [
+              { $ref: "#/components/schemas/UserResult" },
+              { $ref: "#/components/schemas/MessageResult" },
+            ],
+          },
+          UserResult: { type: "object", properties: { kind: { const: "user" } } },
+          MessageResult: { type: "object", properties: { kind: { const: "message" } } },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec);
+
+    expect(operation.responses[0].schemaRefs).toEqual(["SearchResult"]);
+    expect(JSON.stringify(operation)).not.toContain("oneOf");
+    expect(JSON.stringify(operation)).not.toContain("const");
+  });
 });

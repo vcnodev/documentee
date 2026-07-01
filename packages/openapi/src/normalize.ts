@@ -36,10 +36,10 @@ export function normalizeOperations(
         tags: Array.isArray(normalized.tags) ? normalized.tags.filter((tag): tag is string => typeof tag === "string") : [],
         deprecated: normalized.deprecated === true,
         beta: normalized["x-beta"] === true,
-        auth: normalizeAuth(normalized.security),
-        parameters: normalizeParameters(normalized.parameters),
-        requestBody: normalizeRequestBody(normalized.requestBody),
-        responses: normalizeResponses(normalized.responses),
+        auth: normalizeAuth(normalized.security ?? spec.security),
+        parameters: normalizeParameters(normalized.parameters, spec),
+        requestBody: normalizeRequestBody(normalized.requestBody, spec),
+        responses: normalizeResponses(normalized.responses, spec),
         codeSamples: normalizeCodeSamples(normalized["x-codeSamples"]),
         playground,
       });
@@ -71,36 +71,40 @@ function normalizeAuth(security: OpenApiOperation["security"]): string[] {
   return [...new Set(security.flatMap((entry) => Object.keys(entry)))].sort();
 }
 
-function normalizeParameters(parameters: unknown): ApiParameter[] {
+function normalizeParameters(parameters: unknown, spec: OpenApiDocument): ApiParameter[] {
   if (!Array.isArray(parameters)) return [];
 
-  return parameters.filter(isRecord).map((parameter) => ({
-    name: stringValue(parameter.name) ?? "parameter",
-    location: stringValue(parameter.in) ?? "query",
-    required: parameter.required === true,
-    schemaRef: schemaRefFromValue(parameter.schema),
-  }));
+  return parameters.filter(isRecord).map((parameter) => {
+    const resolved = resolveLocalRef(parameter, spec) ?? parameter;
+    return {
+      name: stringValue(resolved.name) ?? "parameter",
+      location: stringValue(resolved.in) ?? "query",
+      required: resolved.required === true,
+      schemaRef: schemaRefFromValue(resolved.schema),
+    };
+  });
 }
 
-function normalizeRequestBody(requestBody: unknown): ApiRequestBody | undefined {
+function normalizeRequestBody(requestBody: unknown, spec: OpenApiDocument): ApiRequestBody | undefined {
   if (!isRecord(requestBody)) return undefined;
-  const content = isRecord(requestBody.content) ? requestBody.content : {};
+  const resolved = resolveLocalRef(requestBody, spec) ?? requestBody;
+  const content = isRecord(resolved.content) ? resolved.content : {};
   const mediaTypes = Object.keys(content).sort();
   const schemaRefs = unique(mediaTypes.flatMap((mediaType) => schemaRefsFromMedia(content[mediaType])));
 
   return {
-    required: requestBody.required === true,
+    required: resolved.required === true,
     mediaTypes,
     schemaRefs,
   };
 }
 
-function normalizeResponses(responses: unknown): ApiResponse[] {
+function normalizeResponses(responses: unknown, spec: OpenApiDocument): ApiResponse[] {
   if (!isRecord(responses)) return [];
 
   return Object.entries(responses)
     .map(([status, response]) => {
-      const record = isRecord(response) ? response : {};
+      const record = isRecord(response) ? (resolveLocalRef(response, spec) ?? response) : {};
       const content = isRecord(record.content) ? record.content : {};
       const mediaTypes = Object.keys(content).sort();
       return {
@@ -123,6 +127,17 @@ function schemaRefFromValue(value: unknown): string | undefined {
   const ref = stringValue(value.$ref);
   if (!ref) return undefined;
   return ref.split("/").filter(Boolean).at(-1);
+}
+
+function resolveLocalRef(value: Record<string, unknown>, spec: OpenApiDocument): Record<string, unknown> | undefined {
+  const ref = stringValue(value.$ref);
+  if (!ref?.startsWith("#/")) return undefined;
+  const resolved = ref
+    .slice(2)
+    .split("/")
+    .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"))
+    .reduce<unknown>((current, part) => isRecord(current) ? current[part] : undefined, spec);
+  return isRecord(resolved) ? resolved : undefined;
 }
 
 function unique(values: string[]): string[] {

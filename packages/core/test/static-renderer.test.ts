@@ -88,6 +88,55 @@ describe("static renderer", () => {
     expect(html).toContain('<meta property="og:image" content="https://docs.acme.test/quickstart.png">');
   });
 
+  it("renders configured theme tokens as CSS variables and custom CSS", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          primaryColor: "#2563eb",
+          accentColor: "#0f766e",
+          backgroundColor: "#ffffff",
+          textColor: "#18181b",
+          mutedTextColor: "#52525b",
+          borderColor: "#d4d4d8",
+          codeBackgroundColor: "#f4f4f5",
+          fontFamily: "Inter",
+          codeFontFamily: "ui-monospace",
+          radius: "10px",
+          navWidth: "300px",
+          customCss: ".custom { color: red; }",
+          darkMode: false,
+        },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-primary: #2563eb;");
+    expect(html).toContain("--doc-accent: #0f766e;");
+    expect(html).toContain("--doc-nav-width: 300px;");
+    expect(html).toContain("font-family: var(--doc-font-family)");
+    expect(html).toContain(".custom { color: red; }");
+  });
+
   it("writes sitemap, robots, and redirect artifacts", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "documentee-seo-"));
     const manifest: SiteManifest = {

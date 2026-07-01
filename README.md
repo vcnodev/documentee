@@ -1,42 +1,34 @@
 # Documentee
 
-Documentee is an open-source, OpenAPI-first documentation generator. This initial milestone provides a renderer-agnostic TypeScript core, a CLI, compact OpenAPI operation pages, static HTML output, and AI-readable `llms.txt` files.
+Documentee is an open-source, OpenAPI-first documentation generator for small static HTML docs, API references, and AI-readable outputs.
 
-## Current Milestone
+## Features
 
-Implemented:
+- Static Markdown/MDX docs from `docs/` or versioned content roots.
+- OpenAPI 3.0/3.1 YAML and JSON loading.
+- Multi-spec API portals and versioned API routes.
+- Compact operation pages with auth, parameters, request bodies, responses, code samples, schema links, and optional browser try-it UI.
+- Spec-scoped schema pages that avoid collisions across multiple OpenAPI specs.
+- Static SEO artifacts: `sitemap.xml`, `robots.txt`, redirect fallback pages, `_redirects`, and Vercel redirects.
+- `llms.txt` and `llms-full.txt` generation.
+- Pagefind indexing for static builds when enabled.
+- Static HTML MDX-style components: Callout, Steps, Tabs, CodeGroup, Accordion, Card, CardGroup, ParamField, ResponseField, Frame, Icon, and Badge.
+- Deeper theme customization through static CSS variables.
+- Migration helpers for Mintlify, Docusaurus, and Nextra docs.
+- Next.js and Astro renderer scaffolds that preserve the small-HTML/no Documentee client JS policy.
 
-- `documentee init`
-- `documentee validate`
-- `documentee build`
-- `documentee dev`
-- `documentee migrate mintlify|docusaurus|nextra`
-- `documentee.config.ts` and `docs.json` config loading
-- Markdown/MDX page discovery
-- OpenAPI 3.x YAML/JSON loading
-- compact API operation route generation with auth, parameters, request body, responses, and schema-reference links
-- opt-in browser API playground / try-it UI for generated OpenAPI operation pages
-- static HTML output
-- `sitemap.xml`, `robots.txt`, static redirect fallback pages, `_redirects`, Vercel redirect artifact, and SEO metadata
-- Pagefind indexing for static builds when `search.provider` is `pagefind`
-- `llms.txt` and `llms-full.txt`
-- validation for duplicate routes, missing navigation targets, and broken internal links
-- publishing-clean package exports that point at built `dist` files
-- Astro renderer route scaffold
-- React server-rendered HTML spike
-- Next.js App Router and Pages Router adapter metadata spike with small HTML/no Documentee client JS checks
-- generated Next.js no-client-JS fixture app regression tests
-- generated Astro project shell
-- generated Next.js App Router and Pages Router examples
-- MDX-style transforms for `Callout`, `Steps`, `Tabs`, `CodeGroup`, `Accordion`, `AccordionGroup`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`
-- deployment templates for GitHub Pages, Vercel, Netlify, and Cloudflare Pages
-- migration helpers for Mintlify, Docusaurus, and Nextra
-- contributor docs for architecture, testing, package boundaries, and small-HTML policy
+## CLI
 
-Planned next:
+```bash
+documentee init <project>
+documentee validate <project>
+documentee build <project> --out <dir>
+documentee dev <project> --port <port>
+documentee preview <project> --out <dir> --port <port>
+documentee migrate <mintlify|docusaurus|nextra> <source> <target>
+```
 
-- deeper theme customization
-- richer migration compatibility for framework-specific MDX components
+`documentee dev` renders routes from the manifest on each request. `documentee preview` first builds the static artifact, then serves the built directory so you can inspect the deployable output.
 
 ## Quickstart
 
@@ -45,29 +37,65 @@ pnpm install
 pnpm test
 pnpm --filter @documentee/cli documentee validate examples/basic
 pnpm --filter @documentee/cli documentee build examples/basic --out dist-example
-pnpm --filter @documentee/cli documentee dev examples/basic --port 3000
+pnpm --filter @documentee/cli documentee preview examples/basic --out dist-example --port 3000
 ```
 
-The build writes static files to `dist-example/`. With the example config, Pagefind artifacts are written to `dist-example/_pagefind/`.
+## Configuration
 
-## Project Shape
-
-```text
-packages/core             config, content, validation, route manifest, static renderer
-packages/openapi          OpenAPI loading and operation normalization
-packages/search           Pagefind indexing wrapper
-packages/llms             llms.txt and llms-full.txt rendering
-packages/cli              documentee init/validate/build/dev
-packages/create           create-documentee wrapper
-packages/renderer-astro   Astro route metadata and generated Astro project shell
-packages/react            server-rendered React HTML spike
-packages/renderer-next    Next App Router and Pages Router adapter/example scaffold
-examples/basic            small docs project fixture
-templates/deploy          static host deployment templates
+```ts
+export default {
+  site: {
+    name: "Acme Docs",
+    url: "https://docs.acme.test",
+    description: "Developer documentation for the Acme API",
+  },
+  content: { directory: "docs" },
+  versions: [
+    { id: "v1", label: "Version 1", routePrefix: "/v1", content: { directory: "docs/v1" } },
+  ],
+  navigation: [
+    { group: "Get Started", pages: ["docs/index", "docs/get-started/quickstart"] },
+    { group: "API Reference", openapi: "core" },
+  ],
+  openapi: {
+    specs: [
+      {
+        id: "core",
+        name: "Core API",
+        source: "./api/openapi.yaml",
+        routeBase: "/api-reference/core",
+        version: "v1",
+        playground: { enabled: true, auth: "bearer", baseUrl: "https://api.acme.test" },
+      },
+    ],
+  },
+  theme: {
+    primaryColor: "#2563eb",
+    accentColor: "#0f766e",
+    navWidth: "300px",
+    radius: "8px",
+    darkMode: true,
+  },
+  search: { provider: "pagefind" },
+};
 ```
 
-## Design Notes
+## Packages
 
-The core model is intentionally renderer-agnostic. Static HTML output, future Astro output, and future Next.js server-rendered HTML should all consume the same content graph, OpenAPI model, and route manifest.
+- [Core](packages/core/README.md): config, content, manifest, validation, static renderer, MDX transforms, SEO.
+- [CLI](packages/cli/README.md): init, validate, build, dev, preview, migrate.
+- [OpenAPI](packages/openapi/README.md): loading and compact operation normalization.
+- [LLMS](packages/llms/README.md): `llms.txt` and `llms-full.txt`.
+- [Search](packages/search/README.md): Pagefind integration.
+- [React](packages/react/README.md): server-rendered HTML primitives.
+- [Astro Renderer](packages/renderer-astro/README.md): Astro route/project scaffolding.
+- [Next Renderer](packages/renderer-next/README.md): Next App Router and Pages Router metadata and fixture checks.
+- [Create](packages/create/README.md): starter wrapper.
 
-For no-client-JS rendering, the goal is not to move large JavaScript bundles into large HTML payloads. The goal is small, route-split, server-rendered HTML with payload budgets for guide pages, API operation pages, schema pages, and search result pages.
+## Contributor Docs
+
+- [Repository Rules](AGENTS.md)
+- [Architecture](docs/contributing/architecture.md)
+- [Testing](docs/contributing/testing.md)
+- [Package Boundaries](docs/contributing/package-boundaries.md)
+- [Small HTML And No Documentee Client JS](docs/contributing/small-html-no-client-js.md)

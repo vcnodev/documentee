@@ -1,22 +1,19 @@
 # @documentee/core
 
-Renderer-agnostic core for Documentee. Loads config, discovers content, builds the route manifest, validates docs, and renders baseline static HTML.
+Renderer-agnostic core for Documentee.
 
-Use this package when building a renderer or CLI command that needs the shared Documentee content graph.
+The core package owns:
 
-## MDX-Style Components
+- `documentee.config.ts` and `docs.json` loading.
+- Content discovery for Markdown/MDX docs.
+- Versioned docs, navigation, and route manifest generation.
+- Multi-spec OpenAPI portal routes and spec-scoped schema routes.
+- Validation for duplicate routes, navigation targets, internal links, redirects, and version/spec references.
+- Static HTML rendering, SEO tags, sitemap, robots, redirects, theme CSS, and browser API playground markup.
+- Static MDX-style transforms for `Callout`, `Steps`, `Tabs`, `CodeGroup`, `Accordion`, `Card`, `CardGroup`, `ParamField`, `ResponseField`, `Frame`, `Icon`, and `Badge`.
 
-The core package includes static HTML transforms for docs authoring primitives:
+## Theme
 
-- `Callout`
-- `Steps` and `Step`
-- `Tabs` and `Tab`
-- `CodeGroup`
-- `Accordion` and `AccordionGroup`
-- `Card` and `CardGroup`
-- `ParamField` and `ResponseField`
-- `Frame`
-- `Icon`
-- `Badge`
+The `theme` config supports `primaryColor`, `accentColor`, `backgroundColor`, `textColor`, `mutedTextColor`, `borderColor`, `codeBackgroundColor`, `fontFamily`, `codeFontFamily`, `radius`, `navWidth`, `customCss`, and `darkMode`. The static renderer emits these as CSS variables with no Documentee client JavaScript.
 
-These transforms emit no Documentee client JavaScript.
+See the [root README](../../README.md), [architecture notes](../../docs/contributing/architecture.md), and [repository rules](../../AGENTS.md).
