@@ -1,0 +1,72 @@
+---
+title: CLI Reference
+description: Documentee command reference.
+---
+
+# CLI Reference
+
+Documentee ships a workspace CLI package in `packages/cli`.
+
+## init
+
+```bash
+documentee init <project>
+```
+
+Creates a starter project.
+
+## validate
+
+```bash
+documentee validate <project>
+```
+
+Loads config, builds the manifest, and reports duplicate routes, broken navigation targets, broken internal links, redirect conflicts, and version/spec reference issues.
+
+## build
+
+```bash
+documentee build <project> --out <dir>
+```
+
+Builds static HTML, SEO artifacts, redirects, `llms.txt`, `llms-full.txt`, and Pagefind assets when search is enabled.
+
+## dev
+
+```bash
+documentee dev <project> --port <port>
+```
+
+Serves generated routes from the manifest while developing.
+
+## preview
+
+```bash
+documentee preview <project> --out <dir> --port <port>
+```
+
+Builds the static artifact first, then serves the built directory.
+
+## migrate
+
+```bash
+documentee migrate <mintlify|docusaurus|nextra> <source> <target>
+```
+
+Copies docs into a Documentee project and applies compatibility transforms for common framework-specific MDX.
+
+## Repository Commands
+
+From this repository, use:
+
+```bash
+pnpm validate
+pnpm docs:build
+pnpm example:build
+```
+
+For the direct CLI:
+
+```bash
+pnpm --filter @documentee/cli documentee build . --out dist-docs
+```

@@ -1,0 +1,48 @@
+---
+title: OpenAPI Reference
+description: Configure OpenAPI 3.0 and 3.1 references in Documentee.
+---
+
+# OpenAPI Reference
+
+Documentee loads OpenAPI 3.0 and 3.1 YAML or JSON files through `openapi.specs`.
+
+## Operation Pages
+
+Each operation becomes a compact static route with:
+
+- HTTP method and path.
+- Summary and description.
+- Tags, beta, and deprecated badges.
+- Auth requirements.
+- Parameters.
+- Request body media types and schema links.
+- Responses and schema links.
+- Code samples.
+- Optional browser playground.
+
+## Multi-Spec Portals
+
+When specs are configured, Documentee emits an API portal at `/api-reference`. Each spec card links to the first operation route for that spec.
+
+## Versioned Specs
+
+Set `openapi.specs[].version` to attach a spec to a configured docs version. The operation routes are nested under that version route prefix.
+
+## Schema Routes
+
+Shared schema references are emitted as spec-scoped schema routes, such as `/schemas/core/Message`, to avoid collisions across multiple specs.
+
+## Browser Playground
+
+The playground is opt in per spec:
+
+```ts
+playground: {
+  enabled: true,
+  baseUrl: "https://api.example.test",
+  auth: "bearer"
+}
+```
+
+The playground adds client JavaScript only to enabled operation pages. It does not store secrets. Requests depend on the API CORS policy.

@@ -1,0 +1,115 @@
+---
+title: Config Reference
+description: Field-by-field reference for documentee.config.ts and docs.json.
+---
+
+# Config Reference
+
+This page documents the current Documentee configuration surface. Update it whenever config fields change.
+
+## site
+
+`site.name` is required and appears in generated metadata and navigation. `site.url` enables absolute canonical URLs, sitemap URLs, and robots sitemap links. `site.description` and `site.logo` are optional.
+
+## content
+
+`content.directory` selects the Markdown/MDX source directory. The default is `docs`.
+
+## navigation
+
+`navigation` is an array of groups:
+
+```ts
+{
+  group: "Start",
+  pages: ["docs/index", "/generated-route"],
+  openapi: "core"
+}
+```
+
+`pages` accepts source file references or absolute routes. `openapi` points at an `openapi.specs` id and adds operation routes for that spec.
+
+## versions
+
+`versions` adds versioned content roots:
+
+```ts
+{
+  id: "v1",
+  label: "Version 1",
+  routePrefix: "/v1",
+  content: { directory: "docs/v1" },
+  default: false
+}
+```
+
+Version ids must be unique. Route prefixes must be unique. Only one version can be marked as default.
+
+## openapi.specs
+
+`openapi.specs` defines API references:
+
+```ts
+{
+  id: "core",
+  name: "Core API",
+  source: "./api/openapi.yaml",
+  routeBase: "/api-reference/core",
+  version: "v1",
+  playground: {
+    enabled: true,
+    baseUrl: "https://api.example.test",
+    auth: "bearer",
+    apiKeyName: "x-api-key",
+    apiKeyLocation: "header"
+  }
+}
+```
+
+`id` and `source` are required. `routeBase` defaults to `/api-reference`. `version` connects a spec to a configured version. `playground` controls the browser try-it UI.
+
+## playground
+
+`playground.enabled` defaults to `false`. `playground.auth` can be `none`, `bearer`, or `apiKey`. `playground.apiKeyLocation` can be `header` or `query`. Browser requests still depend on the API CORS policy.
+
+## search.provider
+
+`search.provider` can be `none` or `pagefind`. `pagefind` generates `/search/` with a static fallback index and Pagefind UI assets.
+
+## theme
+
+`theme.preset` can be `mint`, `slate`, `neutral`, or `highContrast`.
+
+Custom tokens override preset values:
+
+- `primaryColor`
+- `accentColor`
+- `backgroundColor`
+- `textColor`
+- `mutedTextColor`
+- `borderColor`
+- `codeBackgroundColor`
+- `fontFamily`
+- `codeFontFamily`
+- `radius`
+- `navWidth`
+- `customCss`
+- `darkMode`
+
+## seo
+
+`seo.titleTemplate` formats page titles. `seo.image` sets a default Open Graph image. `seo.twitterCard` can be `summary` or `summary_large_image`. `seo.sitemap` controls `sitemap.xml`. `seo.robots` controls `robots.txt`.
+
+## redirects
+
+`redirects` emits static redirect artifacts:
+
+```ts
+{ from: "/old", to: "/new", status: 301 }
+```
+
+Supported statuses are `301`, `302`, `307`, and `308`.
+
+## docs.json Compatibility
+
+`docs.json` supports the same main fields. `colors.primary` maps to `theme.primaryColor` for Mintlify migration compatibility.

@@ -1,0 +1,38 @@
+---
+title: AI Agents
+description: Reading order and operating rules for agents maintaining Documentee docs.
+---
+
+# AI Agents
+
+This section is for coding agents that need to build or maintain Documentee docs by reading the repository.
+
+## Reading Order
+
+1. Read `AGENTS.md` at the repository root.
+2. Read [Configuration](/configuration).
+3. Read the [Config Reference](/api-reference/config).
+4. Read the [CLI Reference](/api-reference/cli).
+5. Read [Architecture](/contributing/architecture), [Testing](/contributing/testing), and [Small HTML Policy](/contributing/small-html-no-client-js).
+6. Read the package README that owns the area you are editing.
+
+## Working Rule
+
+Docs changes should be made in `docs/` and reflected in `documentee.config.ts` navigation when a new primary page is added.
+
+If a config field changes, update [Config Reference](/api-reference/config). If a CLI command changes, update [CLI Reference](/api-reference/cli). If renderer behavior changes, check the small HTML policy.
+
+## Verification
+
+Before claiming docs work is complete, run:
+
+```bash
+pnpm docs:validate
+pnpm validate
+pnpm docs:build
+pnpm test
+```
+
+Continue with the full repository verification from `AGENTS.md` when the docs change is part of a code change.
+
+Next: [Doc Builder Guide](/ai-agents/doc-builder-guide).

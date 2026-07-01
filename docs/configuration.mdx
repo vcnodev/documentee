@@ -1,0 +1,53 @@
+---
+title: Configuration
+description: Configure Documentee sites with documentee.config.ts or docs.json.
+---
+
+# Configuration
+
+Documentee reads `documentee.config.ts`, `documentee.config.js`, or `docs.json` from the project root. TypeScript config is the best fit for this repository because it is easy for agents and humans to review.
+
+```ts
+export default {
+  site: {
+    name: "Documentee",
+    url: "https://documentee.dev",
+    description: "Static docs for humans and AI agents.",
+  },
+  content: { directory: "docs" },
+  navigation: [
+    { group: "Start", pages: ["docs/index", "docs/get-started/quickstart"] },
+    { group: "Reference", pages: ["docs/api-reference/config"] },
+  ],
+  search: { provider: "pagefind" },
+  theme: { preset: "neutral", primaryColor: "#2563eb" },
+};
+```
+
+## Content And Navigation
+
+`content.directory` controls where Markdown and MDX pages are loaded from. Navigation groups point to source files or absolute routes.
+
+Use source references for docs pages:
+
+```ts
+{ group: "Start", pages: ["docs/index", "docs/get-started/quickstart"] }
+```
+
+Use absolute routes when a page is generated or easier to name directly:
+
+```ts
+{ group: "Versions", pages: ["/v1"] }
+```
+
+## Theme
+
+`theme.preset` can be `mint`, `slate`, `neutral`, or `highContrast`. Presets provide defaults. Custom tokens such as `primaryColor`, `accentColor`, `navWidth`, `fontFamily`, and `customCss` override the preset.
+
+## Search
+
+Set `search.provider` to `pagefind` to emit a `/search/` route and build Pagefind assets. Ordinary docs pages do not load Pagefind UI scripts.
+
+## More Reference
+
+Read the full [Config Reference](/api-reference/config), [CLI Reference](/api-reference/cli), and [OpenAPI Reference](/api-reference/openapi).

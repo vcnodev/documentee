@@ -1,0 +1,41 @@
+---
+title: Components
+description: Static MDX-style components supported by Documentee.
+---
+
+# Components
+
+Documentee supports a practical set of MDX-style components by transforming them into static HTML.
+
+## Core Components
+
+- `Callout`
+- `Steps` and `Step`
+- `Tabs` and `Tab`
+- `CodeGroup`
+- `Accordion` and `AccordionGroup`
+- `Card` and `CardGroup`
+- `ParamField`
+- `ResponseField`
+- `Frame`
+- `Icon`
+- `Badge`
+
+## Migration Compatibility
+
+Documentee also recognizes common framework components:
+
+- Docusaurus `DocCardList` and `Admonition`.
+- Nextra `FileTree`, `Folder`, `File`, `Pre`, and `CodeBlock`.
+- Mintlify `Expandable`, `Snippet`, `RequestExample`, and `ResponseExample`.
+
+## Example
+
+```mdx
+<CardGroup cols="2">
+<Card title="Config Reference" href="/api-reference/config">Read every config field.</Card>
+<Card title="Agent Guide" href="/ai-agents">Maintain docs with agents.</Card>
+</CardGroup>
+```
+
+The renderer emits static HTML and CSS. Components do not require client hydration.

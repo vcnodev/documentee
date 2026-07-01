@@ -41,10 +41,14 @@ Theme presets are available as `theme.preset`: `mint`, `slate`, `neutral`, and `
 ```bash
 pnpm install
 pnpm test
+pnpm docs:validate
+pnpm docs:build
 pnpm --filter @documentee/cli documentee validate examples/basic
 pnpm --filter @documentee/cli documentee build examples/basic --out dist-example
 pnpm --filter @documentee/cli documentee preview examples/basic --out dist-example --port 3000
 ```
+
+Documentee dogfoods itself from the root [documentee.config.ts](documentee.config.ts) and [docs](docs/index.mdx) directory. Run `pnpm docs:build` to build the project docs into `dist-docs`.
 
 ## Configuration
 
@@ -101,6 +105,8 @@ export default {
 ## Contributor Docs
 
 - [Repository Rules](AGENTS.md)
+- [Dogfood Docs](docs/index.mdx)
+- [AI Agent Docs](docs/ai-agents/index.mdx)
 - [Architecture](docs/contributing/architecture.md)
 - [Testing](docs/contributing/testing.md)
 - [Package Boundaries](docs/contributing/package-boundaries.md)

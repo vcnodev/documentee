@@ -12,6 +12,7 @@ This file is the working agreement for humans and agents changing Documentee.
 - Static renderer changes must preserve small HTML/no Documentee client JS unless a feature explicitly opts in.
 - Migration changes must include source-framework fixture tests.
 - Documentation changes should keep links between [README.md](README.md), package READMEs, and [docs/contributing](docs/contributing/architecture.md) current.
+- Dogfood docs changes should keep [docs/index.mdx](docs/index.mdx), [docs/api-reference/config.mdx](docs/api-reference/config.mdx), and [docs/ai-agents/index.mdx](docs/ai-agents/index.mdx) current.
 
 ## Verification
 
@@ -21,7 +22,9 @@ Run these before claiming completion:
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm docs:validate
 pnpm validate
+pnpm docs:build
 rm -rf dist-example && pnpm example:build
 ```
 
@@ -39,6 +42,8 @@ Use focused tests during development, but do not use a focused test as proof tha
 ## Links
 
 - [Project README](README.md)
+- [Dogfood Docs](docs/index.mdx)
+- [AI Agent Docs](docs/ai-agents/index.mdx)
 - [Architecture](docs/contributing/architecture.md)
 - [Testing](docs/contributing/testing.md)
 - [Package Boundaries](docs/contributing/package-boundaries.md)

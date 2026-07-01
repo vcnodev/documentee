@@ -1,0 +1,66 @@
+---
+title: Doc Builder Guide
+description: Operational checklist for agents that update Documentee documentation.
+---
+
+# Doc Builder Guide
+
+Use this guide when you are an agent updating Documentee documentation.
+
+## Inputs To Read
+
+- `AGENTS.md` for repository rules.
+- [Configuration](/configuration) for the user-facing config walkthrough.
+- [Config Reference](/api-reference/config) for exact config fields.
+- [CLI Reference](/api-reference/cli) for command behavior.
+- [Architecture](/contributing/architecture) for package ownership.
+- [Testing](/contributing/testing) for required verification.
+- [Small HTML Policy](/contributing/small-html-no-client-js) for renderer constraints.
+
+## Edit Checklist
+
+- Add or update MDX files under `docs/`.
+- Add new primary pages to `documentee.config.ts` navigation.
+- Keep internal links as route links, such as `/api-reference/config`.
+- Update `README.md` when the public feature list or core workflow changes.
+- Update package READMEs when ownership-specific behavior changes.
+- Keep examples aligned with docs when a feature has a config snippet.
+
+## Config Reference Checklist
+
+When config changes, update the page that mentions:
+
+- `theme.preset`
+- `openapi.specs`
+- `versions`
+- `search.provider`
+- `seo`
+- `redirects`
+- `playground`
+
+## Commands
+
+Run these while working:
+
+```bash
+pnpm docs:validate
+pnpm validate
+pnpm docs:build
+pnpm vitest run packages/cli/test/dogfood-docs.test.ts
+```
+
+Run the full gate before final completion:
+
+```bash
+pnpm test
+pnpm typecheck
+pnpm build
+pnpm docs:validate
+pnpm validate
+rm -rf dist-example && pnpm example:build
+rm -rf dist-docs && pnpm docs:build
+```
+
+## Completion Standard
+
+The generated docs must build from the root `documentee.config.ts`, the agent pages must link to the required guidance, and the config reference must match the current config schema.

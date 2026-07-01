@@ -1,0 +1,47 @@
+---
+title: Quickstart
+description: Build and preview a Documentee site.
+---
+
+# Quickstart
+
+Documentee sites are ordinary projects with Markdown or MDX content, a `documentee.config.ts` file, and optional OpenAPI specs.
+
+## Install
+
+```bash
+pnpm install
+```
+
+In this repository, the CLI runs from the workspace package:
+
+```bash
+pnpm --filter @documentee/cli documentee validate .
+pnpm --filter @documentee/cli documentee build . --out dist-docs
+pnpm --filter @documentee/cli documentee preview . --out dist-docs --port 3000
+```
+
+## Minimal Project Shape
+
+```txt
+documentee.config.ts
+docs/
+  index.mdx
+  get-started/
+    quickstart.mdx
+```
+
+The root config points at `docs/`, defines navigation, and selects optional features such as search, SEO, theme presets, OpenAPI specs, redirects, and the browser API playground.
+
+## Validate And Build
+
+Run validation before building:
+
+```bash
+pnpm validate
+pnpm docs:build
+```
+
+`documentee validate` checks duplicate routes, navigation targets, internal links, redirects, and version/spec references. `documentee build` writes static HTML plus SEO/search/AI-readable assets.
+
+Next: [Configuration](/configuration).

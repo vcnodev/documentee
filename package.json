@@ -8,6 +8,8 @@
     "test": "pnpm build && vitest run",
     "typecheck": "pnpm -r --sort run typecheck",
     "validate": "pnpm --filter @documentee/cli documentee validate examples/basic",
+    "docs:validate": "pnpm --filter @documentee/cli documentee validate .",
+    "docs:build": "pnpm --filter @documentee/cli documentee build . --out dist-docs",
     "example:build": "pnpm --filter @documentee/cli documentee build examples/basic --out dist-example"
   },
   "devDependencies": {
