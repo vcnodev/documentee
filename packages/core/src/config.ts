@@ -80,6 +80,7 @@ const redirectSchema = z.object({
 });
 
 const themeSchema = z.object({
+  preset: z.enum(["mint", "slate", "neutral", "highContrast"]).optional(),
   primaryColor: z.string().optional(),
   accentColor: z.string().optional(),
   backgroundColor: z.string().optional(),

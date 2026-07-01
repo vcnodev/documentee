@@ -14,7 +14,9 @@ The core package owns:
 
 ## Theme
 
-The `theme` config supports `primaryColor`, `accentColor`, `backgroundColor`, `textColor`, `mutedTextColor`, `borderColor`, `codeBackgroundColor`, `fontFamily`, `codeFontFamily`, `radius`, `navWidth`, `customCss`, and `darkMode`. The static renderer emits these as CSS variables with no Documentee client JavaScript.
+The `theme` config supports `preset`, `primaryColor`, `accentColor`, `backgroundColor`, `textColor`, `mutedTextColor`, `borderColor`, `codeBackgroundColor`, `fontFamily`, `codeFontFamily`, `radius`, `navWidth`, `customCss`, and `darkMode`. Preset names are `mint`, `slate`, `neutral`, and `highContrast`.
+
+Preset values are defaults. Explicit custom tokens override the preset before the static renderer emits CSS variables with no Documentee client JavaScript.
 
 ## Search
 

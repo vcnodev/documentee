@@ -154,6 +154,38 @@ describe("loadConfig", () => {
     });
   });
 
+  it("loads named theme presets", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        theme: {
+          preset: "mint",
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.theme.preset).toBe("mint");
+  });
+
+  it("rejects unknown theme presets", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        theme: {
+          preset: "ocean",
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Invalid enum value");
+  });
+
   it("maps docs.json colors.primary into theme primaryColor", async () => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(

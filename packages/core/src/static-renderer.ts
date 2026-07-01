@@ -5,6 +5,7 @@ import { routeToOutputPath } from "./paths.js";
 import { renderPlaygroundScript } from "./playground.js";
 import { getRedirects, getSeoConfig, renderRedirectHtml, renderRedirectsFile, renderRobotsTxt, renderSeoHead, renderSitemapXml, renderVercelRedirectsJson } from "./seo.js";
 import type { SiteManifest, SiteRoute } from "./manifest.js";
+import type { DocumenteeConfig } from "./config.js";
 
 export interface StaticRenderOptions {
   outDir: string;
@@ -191,19 +192,20 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
 
 function renderThemeCss(manifest: SiteManifest): { variables: string; customCss: string } {
   const theme = manifest.config.theme;
+  const preset = theme.preset ? themePresets[theme.preset] : {};
   const darkMode = theme.darkMode ? "light dark" : "light";
   const values = {
-    "--doc-primary": theme.primaryColor ?? "#18181b",
-    "--doc-accent": theme.accentColor ?? theme.primaryColor ?? "#18181b",
-    "--doc-background": theme.backgroundColor ?? "Canvas",
-    "--doc-text": theme.textColor ?? "CanvasText",
-    "--doc-muted-text": theme.mutedTextColor ?? "#52525b",
-    "--doc-border": theme.borderColor ?? "#d4d4d8",
-    "--doc-code-background": theme.codeBackgroundColor ?? "transparent",
-    "--doc-font-family": theme.fontFamily ?? "Inter, ui-sans-serif, system-ui, sans-serif",
-    "--doc-code-font-family": theme.codeFontFamily ?? "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-    "--doc-radius": theme.radius ?? "8px",
-    "--doc-nav-width": theme.navWidth ?? "280px",
+    "--doc-primary": theme.primaryColor ?? preset.primaryColor ?? "#18181b",
+    "--doc-accent": theme.accentColor ?? preset.accentColor ?? theme.primaryColor ?? preset.primaryColor ?? "#18181b",
+    "--doc-background": theme.backgroundColor ?? preset.backgroundColor ?? "Canvas",
+    "--doc-text": theme.textColor ?? preset.textColor ?? "CanvasText",
+    "--doc-muted-text": theme.mutedTextColor ?? preset.mutedTextColor ?? "#52525b",
+    "--doc-border": theme.borderColor ?? preset.borderColor ?? "#d4d4d8",
+    "--doc-code-background": theme.codeBackgroundColor ?? preset.codeBackgroundColor ?? "transparent",
+    "--doc-font-family": theme.fontFamily ?? preset.fontFamily ?? "Inter, ui-sans-serif, system-ui, sans-serif",
+    "--doc-code-font-family": theme.codeFontFamily ?? preset.codeFontFamily ?? "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    "--doc-radius": theme.radius ?? preset.radius ?? "8px",
+    "--doc-nav-width": theme.navWidth ?? preset.navWidth ?? "280px",
   };
   const variables = [
     `:root { color-scheme: ${cssValue(darkMode)}; font-family: var(--doc-font-family);`,
@@ -216,6 +218,48 @@ function renderThemeCss(manifest: SiteManifest): { variables: string; customCss:
     customCss: theme.customCss ? sanitizeStyleText(theme.customCss) : "",
   };
 }
+
+type ThemeConfig = DocumenteeConfig["theme"];
+type ThemePreset = Partial<Omit<ThemeConfig, "preset" | "customCss" | "darkMode">>;
+
+const themePresets: Record<NonNullable<ThemeConfig["preset"]>, ThemePreset> = {
+  mint: {
+    primaryColor: "#0f766e",
+    accentColor: "#14b8a6",
+    backgroundColor: "#f8fffc",
+    textColor: "#10201c",
+    mutedTextColor: "#4b635d",
+    borderColor: "#b7d8ce",
+    codeBackgroundColor: "#ecfdf5",
+  },
+  slate: {
+    primaryColor: "#334155",
+    accentColor: "#2563eb",
+    backgroundColor: "#f8fafc",
+    textColor: "#0f172a",
+    mutedTextColor: "#64748b",
+    borderColor: "#cbd5e1",
+    codeBackgroundColor: "#f1f5f9",
+  },
+  neutral: {
+    primaryColor: "#18181b",
+    accentColor: "#52525b",
+    backgroundColor: "#ffffff",
+    textColor: "#18181b",
+    mutedTextColor: "#71717a",
+    borderColor: "#d4d4d8",
+    codeBackgroundColor: "#f4f4f5",
+  },
+  highContrast: {
+    primaryColor: "#000000",
+    accentColor: "#1d4ed8",
+    backgroundColor: "#ffffff",
+    textColor: "#000000",
+    mutedTextColor: "#1f2937",
+    borderColor: "#000000",
+    codeBackgroundColor: "#f3f4f6",
+  },
+};
 
 function renderNavigation(manifest: SiteManifest, currentRoute: SiteRoute): string {
   if (manifest.config.navigation.length === 0) {

@@ -137,6 +137,82 @@ describe("static renderer", () => {
     expect(html).toContain(".custom { color: red; }");
   });
 
+  it("renders named theme preset tokens as CSS variables", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          preset: "mint",
+          darkMode: true,
+        },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-primary: #0f766e;");
+    expect(html).toContain("--doc-accent: #14b8a6;");
+    expect(html).toContain("--doc-background: #f8fffc;");
+    expect(html).toContain("--doc-code-background: #ecfdf5;");
+  });
+
+  it("lets custom theme tokens override preset tokens", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          preset: "slate",
+          primaryColor: "#db2777",
+          navWidth: "320px",
+          darkMode: false,
+        },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-primary: #db2777;");
+    expect(html).toContain("--doc-accent: #2563eb;");
+    expect(html).toContain("--doc-nav-width: 320px;");
+    expect(html).toContain(":root { color-scheme: light;");
+  });
+
   it("renders a polished static shell with route-aware navigation and search entry", () => {
     const manifest: SiteManifest = {
       config: {
