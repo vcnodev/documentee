@@ -137,6 +137,54 @@ describe("static renderer", () => {
     expect(html).toContain(".custom { color: red; }");
   });
 
+  it("renders a polished static shell with route-aware navigation and search entry", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [
+          { group: "Guides", pages: ["docs/index", "docs/get-started/quickstart"] },
+        ],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "pagefind" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+        {
+          kind: "page",
+          route: "/get-started/quickstart",
+          title: "Quickstart",
+          description: "",
+          html: "<h1>Quickstart</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[1]);
+
+    expect(html).toContain('class="doc-shell"');
+    expect(html).toContain('class="doc-sidebar"');
+    expect(html).toContain('class="doc-topbar"');
+    expect(html).toContain('class="doc-search-link" href="/search/"');
+    expect(html).toContain('class="nav-link is-active" href="/get-started/quickstart/"');
+    expect(html).toContain(".doc-content h1");
+    expect(html).toContain("@media (max-width: 820px)");
+    expect(html).not.toContain("pagefind-ui.js");
+  });
+
   it("writes sitemap, robots, and redirect artifacts", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "documentee-seo-"));
     const manifest: SiteManifest = {
@@ -330,7 +378,78 @@ describe("static renderer", () => {
     expect(html).toContain("Admin API v2");
     expect(html).toContain("Version 1");
     expect(html).toContain("2 operations");
+    expect(html).toContain('class="api-portal-card"');
+    expect(html).toContain('class="api-portal-card-meta"');
     expect(html).toContain('href="/v1/api-reference/core/list-messages/"');
+  });
+
+  it("renders search page fallback and Pagefind UI assets only on the search route", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "pagefind" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "Welcome",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+        {
+          kind: "page",
+          route: "/search",
+          title: "Search",
+          description: "Search Acme documentation.",
+          html: "",
+          markdown: "",
+        },
+        {
+          kind: "api-operation",
+          route: "/api-reference/list-messages",
+          title: "GET /messages",
+          description: "List messages",
+          html: "",
+          markdown: "",
+          operation: {
+            specId: "core",
+            method: "GET",
+            path: "/messages",
+            slug: "list-messages",
+            route: "/api-reference/list-messages",
+            summary: "List messages",
+            tags: ["Messages"],
+            deprecated: false,
+            beta: false,
+            auth: [],
+            parameters: [],
+            responses: [{ status: "200", description: "OK", mediaTypes: ["application/json"], schemaRefs: [] }],
+            codeSamples: [],
+          },
+        },
+      ],
+    };
+
+    const homeHtml = renderRoute(manifest, manifest.routes[0]);
+    const searchHtml = renderRoute(manifest, manifest.routes[1]);
+
+    expect(homeHtml).not.toContain("pagefind-ui.js");
+    expect(searchHtml).toContain('id="search"');
+    expect(searchHtml).toContain('class="search-fallback-list"');
+    expect(searchHtml).toContain('href="/api-reference/list-messages/"');
+    expect(searchHtml).toContain('/_pagefind/pagefind-ui.css');
+    expect(searchHtml).toContain('/_pagefind/pagefind-ui.js');
+    expect(searchHtml).toContain("<noscript>");
   });
 
   it("renders a static version switcher when versions are configured", () => {

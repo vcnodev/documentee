@@ -5,6 +5,7 @@ The Next.js and React renderer work is not just about removing JavaScript. A no-
 Policy:
 
 - Do not ship Documentee client-side JavaScript in strict server-rendered mode.
+- Loading Pagefind UI on `/search/` is allowed only when `search.provider` is `pagefind`; ordinary docs pages must not load Pagefind scripts.
 - Do not inline full OpenAPI schema graphs into every operation page.
 - Split large references into operation, schema, example, and search-result routes.
 - Keep route-level HTML payload budgets in tests.

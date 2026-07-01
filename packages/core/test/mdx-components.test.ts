@@ -41,4 +41,53 @@ describe("renderMdxComponents", () => {
     expect(markdown).toContain('class="doc-frame"');
     expect(markdown).toContain("<figcaption>Dashboard preview</figcaption>");
   });
+
+  it("renders framework compatibility components as static HTML", () => {
+    const markdown = renderMdxComponents(`
+<DocCardList />
+
+<Admonition type="tip" title="Heads up">Use the new SDK.</Admonition>
+
+<FileTree>
+<Folder name="app" defaultOpen>
+<File name="page.tsx" />
+</Folder>
+</FileTree>
+
+<CodeBlock language="ts" title="Install">
+pnpm add documentee
+</CodeBlock>
+
+<Pre title="Output">
+done
+</Pre>
+
+<Expandable title="Details">Static content.</Expandable>
+
+<Snippet file="install.mdx" />
+
+<RequestExample title="Create message">
+POST /messages
+</RequestExample>
+
+<ResponseExample title="Created">
+201 Created
+</ResponseExample>
+`);
+
+    expect(markdown).toContain('class="doc-card-list"');
+    expect(markdown).toContain('class="doc-callout doc-callout-tip"');
+    expect(markdown).toContain("<strong>Heads up</strong>");
+    expect(markdown).toContain('class="doc-file-tree"');
+    expect(markdown).toContain("<summary>app</summary>");
+    expect(markdown).toContain("page.tsx");
+    expect(markdown).toContain('class="doc-code-block"');
+    expect(markdown).toContain("<figcaption>Install</figcaption>");
+    expect(markdown).toContain('class="doc-pre"');
+    expect(markdown).toContain("<summary>Details</summary>");
+    expect(markdown).toContain('class="doc-snippet"');
+    expect(markdown).toContain("install.mdx");
+    expect(markdown).toContain('class="doc-example doc-request-example"');
+    expect(markdown).toContain('class="doc-example doc-response-example"');
+  });
 });

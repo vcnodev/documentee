@@ -12,7 +12,9 @@ Documentee is an open-source, OpenAPI-first documentation generator for small st
 - Static SEO artifacts: `sitemap.xml`, `robots.txt`, redirect fallback pages, `_redirects`, and Vercel redirects.
 - `llms.txt` and `llms-full.txt` generation.
 - Pagefind indexing for static builds when enabled.
-- Static HTML MDX-style components: Callout, Steps, Tabs, CodeGroup, Accordion, Card, CardGroup, ParamField, ResponseField, Frame, Icon, and Badge.
+- Polished static docs shell with responsive navigation, readable article typography, API portal cards, dark mode, and route-aware active links.
+- Static `/search/` page with a no-JS route index; Pagefind UI loads only on the search page when enabled.
+- Static HTML MDX-style components: Callout, Steps, Tabs, CodeGroup, Accordion, Card, CardGroup, ParamField, ResponseField, Frame, Icon, Badge, DocCardList, Admonition, FileTree, CodeBlock, Expandable, Snippet, RequestExample, and ResponseExample.
 - Deeper theme customization through static CSS variables.
 - Migration helpers for Mintlify, Docusaurus, and Nextra docs.
 - Next.js and Astro renderer scaffolds that preserve the small-HTML/no Documentee client JS policy.
@@ -29,6 +31,8 @@ documentee migrate <mintlify|docusaurus|nextra> <source> <target>
 ```
 
 `documentee dev` renders routes from the manifest on each request. `documentee preview` first builds the static artifact, then serves the built directory so you can inspect the deployable output.
+
+Search stays static-first. With `search.provider: "pagefind"`, Documentee emits a `/search/` route that includes a plain HTML index of generated pages and loads Pagefind UI assets only on that route.
 
 ## Quickstart
 

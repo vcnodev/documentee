@@ -45,16 +45,19 @@ export async function renderStaticSite(manifest: SiteManifest, options: StaticRe
 }
 
 export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
-  const body = route.kind === "api-operation" && route.operation
+  const body = route.kind === "search" || route.route === "/search"
+    ? renderSearchPage(manifest)
+    : route.kind === "api-operation" && route.operation
     ? renderApiOperation(route)
     : route.kind === "schema" && route.schema
       ? renderSchema(route)
       : route.kind === "api-portal" && route.apiPortal
         ? renderApiPortal(route)
         : route.html;
-  const nav = renderNavigation(manifest);
+  const nav = renderNavigation(manifest, route);
   const versions = renderVersionSwitcher(manifest);
   const script = route.operation?.playground?.enabled ? renderPlaygroundScript() : "";
+  const searchAssets = renderSearchAssets(manifest, route);
   const theme = renderThemeCss(manifest);
 
   return `<!doctype html>
@@ -63,14 +66,36 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   ${renderSeoHead(manifest, route)}
+  ${searchAssets.head}
   <style>
     ${theme.variables}
-    body { background: var(--doc-background); color: var(--doc-text); margin: 0; display: grid; grid-template-columns: var(--doc-nav-width) 1fr; min-height: 100vh; }
-    nav { border-right: 1px solid var(--doc-border); padding: 24px; display: flex; flex-direction: column; gap: 10px; }
-    main { max-width: 880px; padding: 40px; }
+    * { box-sizing: border-box; }
+    body { background: var(--doc-background); color: var(--doc-text); font-family: var(--doc-font-family); margin: 0; min-height: 100vh; }
+    .doc-shell { display: grid; grid-template-columns: var(--doc-nav-width) minmax(0, 1fr); }
+    .doc-sidebar { align-self: start; background: color-mix(in srgb, var(--doc-background) 94%, var(--doc-border)); border-right: 1px solid var(--doc-border); display: flex; flex-direction: column; gap: 18px; min-height: 100vh; padding: 22px; position: sticky; top: 0; }
+    .doc-brand { color: inherit; display: grid; gap: 4px; font-weight: 800; text-decoration: none; }
+    .doc-brand span { color: var(--doc-muted-text); font-size: 13px; font-weight: 500; }
+    .doc-search-link { align-items: center; border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: var(--doc-muted-text); display: flex; font-size: 14px; justify-content: space-between; padding: 10px 12px; text-decoration: none; }
+    .doc-search-link:after { content: "Search"; color: var(--doc-muted-text); font-family: var(--doc-code-font-family); font-size: 12px; }
+    .nav-group { display: grid; gap: 6px; }
+    .nav-group span, .version-switcher span { color: var(--doc-muted-text); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .nav-link, .version-switcher a { border-radius: calc(var(--doc-radius) - 2px); color: var(--doc-muted-text); display: block; font-size: 14px; line-height: 1.35; padding: 7px 9px; text-decoration: none; }
+    .nav-link:hover, .version-switcher a:hover, .doc-search-link:hover { background: color-mix(in srgb, var(--doc-primary) 9%, transparent); color: var(--doc-text); }
+    .nav-link.is-active { background: color-mix(in srgb, var(--doc-primary) 12%, transparent); color: var(--doc-primary); font-weight: 800; }
+    .doc-main { min-width: 0; }
+    .doc-topbar { align-items: center; border-bottom: 1px solid var(--doc-border); display: flex; justify-content: space-between; min-height: 58px; padding: 0 clamp(20px, 5vw, 56px); }
+    .doc-topbar span { color: var(--doc-muted-text); font-size: 13px; }
+    .doc-content { max-width: 920px; padding: 42px clamp(20px, 5vw, 56px) 72px; }
+    .doc-content h1 { font-size: clamp(34px, 5vw, 54px); line-height: 1.03; margin: 0 0 18px; }
+    .doc-content h2 { border-top: 1px solid var(--doc-border); font-size: 24px; margin: 34px 0 14px; padding-top: 26px; }
+    .doc-content h3 { font-size: 18px; margin: 24px 0 10px; }
+    .doc-content p, .doc-content li { line-height: 1.72; }
+    .doc-content table { border-collapse: collapse; display: block; margin: 18px 0; overflow-x: auto; width: 100%; }
+    .doc-content td, .doc-content th { border-bottom: 1px solid var(--doc-border); padding: 10px 12px; text-align: left; }
     code, pre { background: var(--doc-code-background); font-family: var(--doc-code-font-family); }
-    .method { font-weight: 700; }
-    .path { color: var(--doc-muted-text); }
+    pre { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); overflow: auto; padding: 14px; }
+    .method { border: 1px solid color-mix(in srgb, var(--doc-primary) 28%, var(--doc-border)); border-radius: 999px; color: var(--doc-primary); display: inline-flex; font-size: 13px; font-weight: 800; padding: 5px 9px; vertical-align: middle; }
+    .path { color: var(--doc-muted-text); font-family: var(--doc-code-font-family); font-size: 0.88em; overflow-wrap: anywhere; }
     a { color: var(--doc-primary); }
     .doc-badge, .badge { border: 1px solid var(--doc-border); border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; }
     .doc-badge-success { border-color: #16a34a; color: #166534; }
@@ -81,7 +106,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-card-group-1 { grid-template-columns: 1fr; }
     .doc-card-group-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
     .doc-card-group-3 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
-    .doc-card { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; }
+    .doc-card, .doc-card-list-item { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; }
     .doc-card h3 { font-size: 16px; margin: 0 0 6px; }
     .doc-card p { color: var(--doc-muted-text); margin: 0; }
     .doc-card-icon { flex: 0 0 auto; }
@@ -98,13 +123,29 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-frame { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; overflow: hidden; padding: 12px; }
     .doc-frame img { display: block; height: auto; max-width: 100%; }
     .doc-frame figcaption { color: var(--doc-muted-text); font-size: 13px; margin-top: 10px; }
+    .doc-callout { background: color-mix(in srgb, var(--doc-accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--doc-accent) 24%, var(--doc-border)); border-radius: var(--doc-radius); margin: 20px 0; padding: 14px 16px; }
+    .doc-steps { border-left: 1px solid var(--doc-border); margin: 22px 0; padding-left: 28px; }
+    .doc-steps li { padding-left: 8px; }
+    .doc-tabs, .doc-code-group, .doc-example, .doc-code-block, .doc-pre, .doc-snippet { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; overflow: hidden; }
+    .doc-tab, .doc-example-body { padding: 16px; }
+    .doc-example figcaption, .doc-code-block figcaption, .doc-pre figcaption, .doc-snippet figcaption { background: color-mix(in srgb, var(--doc-border) 32%, transparent); border-bottom: 1px solid var(--doc-border); color: var(--doc-muted-text); font-size: 13px; font-weight: 800; padding: 9px 12px; }
+    .doc-example pre, .doc-code-block pre, .doc-pre pre { border: 0; border-radius: 0; margin: 0; }
+    .doc-card-list { display: grid; gap: 12px; margin: 20px 0; }
+    .doc-file-tree { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); font-family: var(--doc-code-font-family); margin: 20px 0; padding: 10px 12px; }
+    .doc-file-tree details { margin-left: 10px; }
+    .doc-file, .doc-folder { display: block; padding: 4px 0; }
+    .doc-expandable { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; padding: 0; }
+    .doc-expandable summary { cursor: pointer; font-weight: 800; padding: 13px 15px; }
+    .doc-expandable div { color: var(--doc-muted-text); padding: 0 15px 15px; }
     .version-switcher { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); display: grid; gap: 8px; margin: 8px 0 18px; padding: 12px; }
-    .version-switcher span { color: var(--doc-muted-text); font-size: 12px; font-weight: 700; text-transform: uppercase; }
-    .version-switcher a { color: inherit; text-decoration: none; }
-    .api-portal-list { display: grid; gap: 14px; margin-top: 24px; }
-    .api-portal-spec { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); padding: 16px; }
-    .api-portal-spec h2 { font-size: 18px; margin: 0 0 8px; }
-    .api-portal-spec p { color: var(--doc-muted-text); margin: 4px 0; }
+    .api-portal-list { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 24px; }
+    .api-portal-card { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); display: grid; gap: 12px; padding: 18px; }
+    .api-portal-card h2 { font-size: 18px; margin: 0; }
+    .api-portal-card p { color: var(--doc-muted-text); margin: 0; }
+    .api-portal-card-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .api-portal-card-meta span { border: 1px solid var(--doc-border); border-radius: 999px; color: var(--doc-muted-text); font-size: 12px; padding: 4px 8px; }
+    .api-section { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 20px 0; padding: 18px; }
+    .api-section h2 { border-top: 0; margin-top: 0; padding-top: 0; }
     .api-playground { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin-top: 28px; padding: 18px; }
     .api-playground form { display: grid; gap: 16px; }
     .api-playground fieldset { border: 1px solid #e4e4e7; border-radius: 8px; display: grid; gap: 10px; margin: 0; padding: 14px; }
@@ -114,19 +155,35 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .api-playground button { border: 1px solid var(--doc-text); border-radius: 6px; cursor: pointer; font: inherit; font-weight: 700; padding: 9px 12px; width: fit-content; }
     .api-playground pre { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); margin: 0; min-height: 80px; overflow: auto; padding: 12px; white-space: pre-wrap; }
     .api-playground-note { color: var(--doc-muted-text); font-size: 14px; }
+    .search-panel { display: grid; gap: 18px; }
+    .search-pagefind { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); min-height: 72px; padding: 16px; }
+    .search-fallback-list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+    .search-fallback-list a { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: inherit; display: grid; gap: 4px; padding: 14px; text-decoration: none; }
+    .search-fallback-list span { color: var(--doc-muted-text); font-size: 13px; }
+    @media (max-width: 820px) {
+      .doc-shell { display: block; }
+      .doc-sidebar { border-bottom: 1px solid var(--doc-border); border-right: 0; min-height: 0; position: static; }
+      .doc-topbar { min-height: 48px; }
+      .doc-content { padding-top: 28px; }
+    }
     ${theme.customCss}
   </style>
 </head>
-<body>
-  <nav>
-    <strong>${escapeHtml(manifest.config.site.name)}</strong>
+<body class="doc-shell">
+  <aside class="doc-sidebar">
+    <a class="doc-brand" href="/">${escapeHtml(manifest.config.site.name)}${manifest.config.site.description ? `<span>${escapeHtml(manifest.config.site.description)}</span>` : ""}</a>
+    ${renderSearchLink(manifest)}
     ${versions}
     ${nav}
-  </nav>
-  <main>
-    ${body}
+  </aside>
+  <main class="doc-main">
+    <header class="doc-topbar"><span>${escapeHtml(route.title)}</span><span>${escapeHtml(route.kind)}</span></header>
+    <div class="doc-content">
+      ${body}
+    </div>
   </main>
   ${script}
+  ${searchAssets.body}
 </body>
 </html>
 `;
@@ -160,10 +217,10 @@ function renderThemeCss(manifest: SiteManifest): { variables: string; customCss:
   };
 }
 
-function renderNavigation(manifest: SiteManifest): string {
+function renderNavigation(manifest: SiteManifest, currentRoute: SiteRoute): string {
   if (manifest.config.navigation.length === 0) {
     return manifest.routes
-      .map((item) => `<a href="${hrefForRoute(item.route)}">${escapeHtml(item.title)}</a>`)
+      .map((item) => renderNavLink(item, currentRoute))
       .join("\n");
   }
 
@@ -173,12 +230,12 @@ function renderNavigation(manifest: SiteManifest): string {
         .map((pageRef) => routeFromPageRef(pageRef, manifest.config.content.directory))
         .map((route) => manifest.routes.find((candidate) => candidate.route === route))
         .filter((route): route is SiteRoute => Boolean(route))
-        .map((item) => `<a href="${hrefForRoute(item.route)}">${escapeHtml(item.title)}</a>`);
+        .map((item) => renderNavLink(item, currentRoute));
 
       const apiLinks = group.openapi
         ? manifest.routes
             .filter((item) => item.operation?.specId === group.openapi)
-            .map((item) => `<a href="${hrefForRoute(item.route)}">${escapeHtml(item.title)}</a>`)
+            .map((item) => renderNavLink(item, currentRoute))
         : [];
 
       return `<section class="nav-group">
@@ -187,6 +244,16 @@ function renderNavigation(manifest: SiteManifest): string {
 </section>`;
     })
     .join("\n");
+}
+
+function renderNavLink(item: SiteRoute, currentRoute: SiteRoute): string {
+  const active = item.route === currentRoute.route ? " is-active" : "";
+  return `<a class="nav-link${active}" href="${hrefForRoute(item.route)}">${escapeHtml(item.title)}</a>`;
+}
+
+function renderSearchLink(manifest: SiteManifest): string {
+  if (manifest.config.search.provider !== "pagefind") return "";
+  return `<a class="doc-search-link" href="/search/">Search docs</a>`;
 }
 
 function renderVersionSwitcher(manifest: SiteManifest): string {
@@ -214,18 +281,18 @@ function renderApiOperation(route: SiteRoute): string {
   const tags = operation.tags.length > 0 ? `<p>Tags: ${operation.tags.map(escapeHtml).join(", ")}</p>` : "";
   const badges = [operation.deprecated ? "Deprecated" : "", operation.beta ? "Beta" : ""].filter(Boolean);
   const badgeHtml = badges.length > 0 ? `<p>${badges.map((badge) => `<span class="badge">${badge}</span>`).join(" ")}</p>` : "";
-  const auth = operation.auth.length > 0 ? `<section><h2>Authentication</h2><p>${operation.auth.map(escapeHtml).join(", ")}</p></section>` : "";
+  const auth = operation.auth.length > 0 ? `<section class="api-section"><h2>Authentication</h2><p>${operation.auth.map(escapeHtml).join(", ")}</p></section>` : "";
   const parameters = operation.parameters.length > 0
-    ? `<section><h2>Parameters</h2><table><tbody>${operation.parameters.map((parameter) => `<tr><td>${escapeHtml(parameter.name)}</td><td>${escapeHtml(parameter.location)}</td><td>${parameter.required ? "required" : "optional"}</td></tr>`).join("")}</tbody></table></section>`
+    ? `<section class="api-section"><h2>Parameters</h2><table><tbody>${operation.parameters.map((parameter) => `<tr><td>${escapeHtml(parameter.name)}</td><td>${escapeHtml(parameter.location)}</td><td>${parameter.required ? "required" : "optional"}</td></tr>`).join("")}</tbody></table></section>`
     : "";
   const requestBody = operation.requestBody
-    ? `<section><h2>Request Body</h2><p>${operation.requestBody.mediaTypes.map(escapeHtml).join(", ") || "No media type declared"}</p>${renderSchemaRefs(operation.specId, operation.requestBody.schemaRefs)}</section>`
+    ? `<section class="api-section"><h2>Request Body</h2><p>${operation.requestBody.mediaTypes.map(escapeHtml).join(", ") || "No media type declared"}</p>${renderSchemaRefs(operation.specId, operation.requestBody.schemaRefs)}</section>`
     : "";
   const responses = operation.responses.length > 0
-    ? `<section><h2>Responses</h2>${operation.responses.map((response) => `<article><h3>${escapeHtml(response.status)}</h3><p>${escapeHtml(response.description)}</p>${response.mediaTypes.length > 0 ? `<p>${response.mediaTypes.map(escapeHtml).join(", ")}</p>` : ""}${renderSchemaRefs(operation.specId, response.schemaRefs)}</article>`).join("")}</section>`
+    ? `<section class="api-section"><h2>Responses</h2>${operation.responses.map((response) => `<article><h3>${escapeHtml(response.status)}</h3><p>${escapeHtml(response.description)}</p>${response.mediaTypes.length > 0 ? `<p>${response.mediaTypes.map(escapeHtml).join(", ")}</p>` : ""}${renderSchemaRefs(operation.specId, response.schemaRefs)}</article>`).join("")}</section>`
     : "";
   const codeSamples = operation.codeSamples.length > 0
-    ? `<section><h2>Code Samples</h2>${operation.codeSamples.map((sample) => `<figure><figcaption>${escapeHtml(sample.lang)}</figcaption><pre><code>${escapeHtml(sample.source)}</code></pre></figure>`).join("")}</section>`
+    ? `<section class="api-section"><h2>Code Samples</h2>${operation.codeSamples.map((sample) => `<figure><figcaption>${escapeHtml(sample.lang)}</figcaption><pre><code>${escapeHtml(sample.source)}</code></pre></figure>`).join("")}</section>`
     : "";
   const playground = renderApiPlayground(route);
 
@@ -252,21 +319,51 @@ function renderApiPortal(route: SiteRoute): string {
   <h1>${escapeHtml(portal.title)}</h1>
   <div class="api-portal-list">
     ${portal.specs.map((spec) => {
-      const version = spec.version ? `<p>${escapeHtml(spec.version.label)}</p>` : "";
       const operations = `${spec.operationCount} ${spec.operationCount === 1 ? "operation" : "operations"}`;
       const link = spec.firstOperationRoute
         ? `<p><a href="${hrefForRoute(spec.firstOperationRoute)}">View reference</a></p>`
         : "";
-      return `<section class="api-portal-spec">
+      return `<section class="api-portal-card">
       <h2>${escapeHtml(spec.name)}</h2>
-      <p>${escapeHtml(spec.id)}</p>
-      ${version}
-      <p>${escapeHtml(operations)}</p>
+      <div class="api-portal-card-meta"><span>${escapeHtml(spec.id)}</span>${spec.version ? `<span>${escapeHtml(spec.version.label)}</span>` : ""}<span>${escapeHtml(operations)}</span></div>
       ${link}
     </section>`;
     }).join("\n    ")}
   </div>
 </article>`;
+}
+
+function renderSearchPage(manifest: SiteManifest): string {
+  const routes = manifest.routes
+    .filter((item) => item.route !== "/search")
+    .filter((item) => item.kind !== "schema")
+    .filter((item) => item.title.trim().length > 0);
+
+  return `<article id="search" class="search-panel">
+  <h1>Search</h1>
+  ${manifest.config.search.provider === "pagefind" ? `<div id="pagefind-search" class="search-pagefind" data-pagefind-ui></div>` : ""}
+  <noscript></noscript>
+  <section>
+    <h2>All pages</h2>
+    <ul class="search-fallback-list">
+      ${routes.map((item) => `<li><a href="${hrefForRoute(item.route)}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.description || item.route)}</span></a></li>`).join("\n      ")}
+    </ul>
+  </section>
+</article>`;
+}
+
+function renderSearchAssets(manifest: SiteManifest, route: SiteRoute): { head: string; body: string } {
+  if (manifest.config.search.provider !== "pagefind" || route.route !== "/search") {
+    return { head: "", body: "" };
+  }
+
+  return {
+    head: '<link href="/_pagefind/pagefind-ui.css" rel="stylesheet">',
+    body: `<script type="module">
+    import { PagefindUI } from "/_pagefind/pagefind-ui.js";
+    new PagefindUI({ element: "#pagefind-search", showSubResults: true });
+  </script>`,
+  };
 }
 
 function renderApiPlayground(route: SiteRoute): string {

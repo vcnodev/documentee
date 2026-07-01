@@ -197,4 +197,31 @@ components:
       },
     ]);
   });
+
+  it("adds a generated search route when Pagefind search is enabled", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-manifest-search-"));
+    await mkdir(join(root, "docs"), { recursive: true });
+    await writeFile(join(root, "docs", "index.mdx"), "---\ntitle: Home\n---\n# Home\n");
+
+    const config: DocumenteeConfig = {
+      site: { name: "Acme", description: "" },
+      content: { directory: "docs" },
+      navigation: [],
+      openapi: { specs: [] },
+      seo: {
+        sitemap: true,
+        robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        twitterCard: "summary_large_image",
+      },
+      redirects: [],
+      search: { provider: "pagefind" },
+      theme: { darkMode: true },
+    };
+
+    const manifest = await buildManifest(root, config);
+    const searchRoute = manifest.routes.find((route) => route.route === "/search");
+
+    expect(searchRoute?.title).toBe("Search");
+    expect(searchRoute?.description).toBe("Search Acme documentation.");
+  });
 });

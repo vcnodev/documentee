@@ -2,6 +2,9 @@ import { escapeHtml } from "./html.js";
 
 export function renderMdxComponents(markdown: string): string {
   return [
+    transformDocusaurusComponents,
+    transformNextraComponents,
+    transformMintlifyComponents,
     transformBadges,
     transformIcons,
     transformCards,
@@ -15,6 +18,69 @@ export function renderMdxComponents(markdown: string): string {
     transformSteps,
     transformCallouts,
   ].reduce((input, transform) => transform(input), markdown);
+}
+
+function transformDocusaurusComponents(input: string): string {
+  return input
+    .replace(/<DocCardList(?:\s+[^>]*)?\/>/g, () => {
+      return `<div class="doc-card-list"></div>`;
+    })
+    .replace(/<Admonition([^>]*)>([\s\S]*?)<\/Admonition>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const type = classToken(attrs.type ?? "note");
+      const title = attrs.title ? `<strong>${escapeHtml(attrs.title)}</strong>` : "";
+      return `<aside class="doc-callout doc-callout-${type}">${title}${title ? "<br>" : ""}${escapeHtml(body.trim())}</aside>`;
+    });
+}
+
+function transformNextraComponents(input: string): string {
+  return input
+    .replace(/<File([^>]*)\/>/g, (_match, attrsSource: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const name = attrs.name ?? attrs.path ?? "file";
+      return `<span class="doc-file">${escapeHtml(name)}</span>`;
+    })
+    .replace(/<Folder([^>]*)>([\s\S]*?)<\/Folder>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const name = attrs.name ?? "folder";
+      const open = hasBooleanAttribute(attrs, "defaultOpen") || hasBooleanAttribute(attrs, "open");
+      return `<details class="doc-folder"${open ? " open" : ""}><summary>${escapeHtml(name)}</summary>${body.trim()}</details>`;
+    })
+    .replace(/<FileTree\s*>([\s\S]*?)<\/FileTree>/g, (_match, body: string) => {
+      return `<div class="doc-file-tree">\n${body.trim()}\n</div>`;
+    })
+    .replace(/<CodeBlock([^>]*)>([\s\S]*?)<\/CodeBlock>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const language = attrs.language ?? attrs.lang ?? "text";
+      const title = attrs.title ? `<figcaption>${escapeHtml(attrs.title)}</figcaption>` : "";
+      return `<figure class="doc-code-block">${title}<pre><code class="language-${classToken(language)}">${escapeHtml(body.trim())}</code></pre></figure>`;
+    })
+    .replace(/<Pre([^>]*)>([\s\S]*?)<\/Pre>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const title = attrs.title ? `<figcaption>${escapeHtml(attrs.title)}</figcaption>` : "";
+      return `<figure class="doc-pre">${title}<pre><code>${escapeHtml(body.trim())}</code></pre></figure>`;
+    });
+}
+
+function transformMintlifyComponents(input: string): string {
+  return input
+    .replace(/<Expandable([^>]*)>([\s\S]*?)<\/Expandable>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const title = attrs.title ?? "Details";
+      const open = hasBooleanAttribute(attrs, "defaultOpen") || hasBooleanAttribute(attrs, "open");
+      return `<details class="doc-expandable"${open ? " open" : ""}><summary>${escapeHtml(title)}</summary><div>${escapeHtml(body.trim())}</div></details>`;
+    })
+    .replace(/<Snippet([^>]*)\/>/g, (_match, attrsSource: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const file = attrs.file ?? attrs.src ?? "snippet";
+      return `<figure class="doc-snippet"><figcaption>${escapeHtml(file)}</figcaption></figure>`;
+    })
+    .replace(/<RequestExample([^>]*)>([\s\S]*?)<\/RequestExample>/g, (_match, attrsSource: string, body: string) => {
+      return renderExample("request", parseAttributes(attrsSource), body);
+    })
+    .replace(/<ResponseExample([^>]*)>([\s\S]*?)<\/ResponseExample>/g, (_match, attrsSource: string, body: string) => {
+      return renderExample("response", parseAttributes(attrsSource), body);
+    });
 }
 
 function transformCallouts(input: string): string {
@@ -126,6 +192,11 @@ function renderField(kind: "param" | "response", attrs: Record<string, string>, 
   const type = attrs.type ? `<span class="doc-field-type">${escapeHtml(attrs.type)}</span>` : "";
   const required = hasBooleanAttribute(attrs, "required") ? `<span class="doc-field-required">required</span>` : "";
   return `<div class="doc-field doc-field-${kind}"><div><strong>${escapeHtml(name)}</strong>${type}${required}</div><p>${escapeHtml(body.trim())}</p></div>`;
+}
+
+function renderExample(kind: "request" | "response", attrs: Record<string, string>, body: string): string {
+  const title = attrs.title ?? (kind === "request" ? "Request example" : "Response example");
+  return `<figure class="doc-example doc-${kind}-example"><figcaption>${escapeHtml(title)}</figcaption><pre><code>${escapeHtml(body.trim())}</code></pre></figure>`;
 }
 
 function parseAttributes(source: string): Record<string, string> {

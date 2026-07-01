@@ -4,7 +4,7 @@ import type { DocumenteeConfig } from "./config.js";
 import type { ContentPage, PageSeo } from "./content.js";
 import { loadContentPages } from "./content.js";
 
-export type RouteKind = "page" | "api-operation" | "schema" | "api-portal";
+export type RouteKind = "page" | "api-operation" | "schema" | "api-portal" | "search";
 
 export interface VersionReference {
   id: string;
@@ -105,6 +105,7 @@ export async function buildManifest(projectRoot: string, config: DocumenteeConfi
 
   const routes: SiteRoute[] = [
     ...pageRoutes,
+    ...searchRoute(config),
     ...apiPortalRoute(config, operations, versionById),
     ...operationRoutes,
     ...schemaReferences(operations).map((schema): SiteRoute => ({
@@ -119,6 +120,19 @@ export async function buildManifest(projectRoot: string, config: DocumenteeConfi
   ].sort((a, b) => a.route.localeCompare(b.route));
 
   return { config, pages, versions: publicVersions, operations, routes };
+}
+
+function searchRoute(config: DocumenteeConfig): SiteRoute[] {
+  if (config.search.provider !== "pagefind") return [];
+
+  return [{
+    kind: "search",
+    route: "/search",
+    title: "Search",
+    description: `Search ${config.site.name} documentation.`,
+    html: "",
+    markdown: "",
+  }];
 }
 
 function schemaReferences(operations: ApiOperation[]): Array<SchemaReference & { route: string }> {
