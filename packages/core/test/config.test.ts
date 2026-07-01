@@ -111,6 +111,43 @@ describe("loadConfig", () => {
     });
   });
 
+  it("loads versioned docs and OpenAPI spec version ownership", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        versions: [
+          { id: "v1", content: { directory: "docs/v1" } },
+          { id: "v2", label: "Version 2", routePrefix: "/v2", content: { directory: "docs/v2" }, default: true },
+        ],
+        openapi: {
+          specs: [{ id: "core-v2", source: "./api/core-v2.yaml", version: "v2" }],
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.versions).toEqual([
+      {
+        id: "v1",
+        label: "v1",
+        routePrefix: "/v1",
+        content: { directory: "docs/v1" },
+        default: false,
+      },
+      {
+        id: "v2",
+        label: "Version 2",
+        routePrefix: "/v2",
+        content: { directory: "docs/v2" },
+        default: true,
+      },
+    ]);
+    expect(config.openapi.specs[0].version).toBe("v2");
+  });
+
   it("rejects duplicate OpenAPI spec ids", async () => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(
@@ -127,5 +164,53 @@ describe("loadConfig", () => {
     );
 
     await expect(loadConfig(root)).rejects.toThrow("Duplicate OpenAPI spec id: core");
+  });
+
+  it("rejects duplicate version ids", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        versions: [
+          { id: "v1", content: { directory: "docs/v1" } },
+          { id: "v1", content: { directory: "docs/v1-copy" } },
+        ],
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Duplicate version id: v1");
+  });
+
+  it("rejects duplicate version route prefixes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        versions: [
+          { id: "v1", routePrefix: "/archive", content: { directory: "docs/v1" } },
+          { id: "v2", routePrefix: "/archive", content: { directory: "docs/v2" } },
+        ],
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Duplicate version route prefix: /archive");
+  });
+
+  it("rejects multiple default versions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        versions: [
+          { id: "v1", content: { directory: "docs/v1" }, default: true },
+          { id: "v2", content: { directory: "docs/v2" }, default: true },
+        ],
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Only one version can be marked as default");
   });
 });

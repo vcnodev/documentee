@@ -4,6 +4,7 @@ export function validateManifest(manifest: SiteManifest): string[] {
   return [
     ...validateDuplicateRoutes(manifest),
     ...validateNavigationTargets(manifest),
+    ...validateOpenApiVersions(manifest),
     ...validateInternalLinks(manifest),
     ...validateRedirects(manifest),
   ];
@@ -22,6 +23,7 @@ function validateDuplicateRoutes(manifest: SiteManifest): string[] {
 
 function validateNavigationTargets(manifest: SiteManifest): string[] {
   const routeSet = new Set(manifest.routes.map((route) => route.route));
+  const specIds = new Set(manifest.config.openapi.specs.map((spec) => spec.id));
   const diagnostics: string[] = [];
 
   for (const group of manifest.config.navigation) {
@@ -31,9 +33,20 @@ function validateNavigationTargets(manifest: SiteManifest): string[] {
         diagnostics.push(`Navigation page target does not exist: ${pageRef}`);
       }
     }
+
+    if (group.openapi && !specIds.has(group.openapi)) {
+      diagnostics.push(`Navigation OpenAPI target does not exist: ${group.openapi}`);
+    }
   }
 
   return diagnostics;
+}
+
+function validateOpenApiVersions(manifest: SiteManifest): string[] {
+  const versionIds = new Set((manifest.config.versions ?? []).map((version) => version.id));
+  return manifest.config.openapi.specs
+    .filter((spec) => spec.version && !versionIds.has(spec.version))
+    .map((spec) => `OpenAPI spec ${spec.id} references missing version: ${spec.version}`);
 }
 
 function validateInternalLinks(manifest: SiteManifest): string[] {
@@ -75,6 +88,7 @@ function normalizeInternalLink(link: string): string {
 }
 
 function routeFromPageRef(pageRef: string, contentDirectory: string): string {
+  if (pageRef.startsWith("/")) return normalizeInternalLink(pageRef);
   let value = pageRef.replace(/\.(mdx|md)$/i, "");
   const contentPrefix = `${contentDirectory.replace(/^\/+|\/+$/g, "")}/`;
   if (value.startsWith(contentPrefix)) value = value.slice(contentPrefix.length);

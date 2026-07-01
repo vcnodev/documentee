@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Acme Admin API
+  version: 1.0.0
+  description: Administrative API used by Documentee examples.
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      summary: List users
+      description: Returns users visible to administrators.
+      tags:
+        - Users
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+components:
+  schemas:
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string

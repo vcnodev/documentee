@@ -185,6 +185,7 @@ describe("static renderer", () => {
     expect(html).toContain("Request Body");
     expect(html).toContain("Responses");
     expect(html).toContain("UpdateMessageRequest");
+    expect(html).toContain('href="/schemas/core/Message/"');
     expect(html).toContain("Beta");
     expect(html).toContain("Code Samples");
     expect(html).toContain("curl https://api.acme.test/messages/id");
@@ -208,12 +209,12 @@ describe("static renderer", () => {
       routes: [
         {
           kind: "schema",
-          route: "/schemas/Message",
+          route: "/schemas/core/Message",
           title: "Schema: Message",
           description: "Shared schema reference.",
           html: "",
           markdown: "",
-          schema: { name: "Message", specId: "core" },
+          schema: { name: "Message", specId: "core", route: "/schemas/core/Message" },
         },
       ],
     };
@@ -222,6 +223,103 @@ describe("static renderer", () => {
 
     expect(html).toContain("Schema: Message");
     expect(html).toContain("Shared schema reference");
+  });
+
+  it("renders an API portal with spec summaries", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      versions: [
+        { id: "v1", label: "Version 1", routePrefix: "/v1", default: false },
+        { id: "v2", label: "Version 2", routePrefix: "/v2", default: true },
+      ],
+      operations: [],
+      routes: [
+        {
+          kind: "api-portal",
+          route: "/api-reference",
+          title: "API Reference",
+          description: "API reference portal.",
+          html: "",
+          markdown: "",
+          apiPortal: {
+            route: "/api-reference",
+            title: "API Reference",
+            specs: [
+              {
+                id: "core-v1",
+                name: "Core API v1",
+                version: { id: "v1", label: "Version 1", routePrefix: "/v1", default: false },
+                operationCount: 2,
+                firstOperationRoute: "/v1/api-reference/core/list-messages",
+              },
+              {
+                id: "admin-v2",
+                name: "Admin API v2",
+                version: { id: "v2", label: "Version 2", routePrefix: "/v2", default: true },
+                operationCount: 1,
+                firstOperationRoute: "/v2/api-reference/admin/list-users",
+              },
+            ],
+          },
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("Core API v1");
+    expect(html).toContain("Admin API v2");
+    expect(html).toContain("Version 1");
+    expect(html).toContain("2 operations");
+    expect(html).toContain('href="/v1/api-reference/core/list-messages/"');
+  });
+
+  it("renders a static version switcher when versions are configured", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: [],
+      versions: [
+        { id: "v1", label: "Version 1", routePrefix: "/v1", default: false },
+        { id: "v2", label: "Version 2", routePrefix: "/v2", default: true },
+      ],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("version-switcher");
+    expect(html).toContain('href="/v1/"');
+    expect(html).toContain('href="/v2/"');
+    expect(html).toContain("Version 2");
   });
 
   it("includes default styles for richer MDX components", () => {

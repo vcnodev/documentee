@@ -7,9 +7,19 @@ export default {
   content: {
     directory: "docs",
   },
+  versions: [
+    {
+      id: "v1",
+      label: "Version 1",
+      routePrefix: "/v1",
+      content: { directory: "docs/v1" },
+    },
+  ],
   navigation: [
     { group: "Get Started", pages: ["docs/index", "docs/get-started/quickstart", "docs/components"] },
+    { group: "Versions", pages: ["/v1"] },
     { group: "API Reference", openapi: "core" },
+    { group: "Admin API", openapi: "admin" },
   ],
   openapi: {
     specs: [
@@ -17,11 +27,22 @@ export default {
         id: "core",
         name: "Core API",
         source: "./api/openapi.yaml",
-        routeBase: "/api-reference",
+        routeBase: "/api-reference/core",
+        version: "v1",
         playground: {
           enabled: true,
           baseUrl: "https://api.acme.test",
           auth: "bearer",
+        },
+      },
+      {
+        id: "admin",
+        name: "Admin API",
+        source: "./api/admin-openapi.yaml",
+        routeBase: "/api-reference/admin",
+        playground: {
+          enabled: false,
+          auth: "none",
         },
       },
     ],

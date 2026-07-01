@@ -49,8 +49,11 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     ? renderApiOperation(route)
     : route.kind === "schema" && route.schema
       ? renderSchema(route)
-      : route.html;
+      : route.kind === "api-portal" && route.apiPortal
+        ? renderApiPortal(route)
+        : route.html;
   const nav = renderNavigation(manifest);
+  const versions = renderVersionSwitcher(manifest);
   const script = route.operation?.playground?.enabled ? renderPlaygroundScript() : "";
 
   return `<!doctype html>
@@ -93,6 +96,13 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-frame { border: 1px solid #d4d4d8; border-radius: 8px; margin: 20px 0; overflow: hidden; padding: 12px; }
     .doc-frame img { display: block; height: auto; max-width: 100%; }
     .doc-frame figcaption { color: #52525b; font-size: 13px; margin-top: 10px; }
+    .version-switcher { border: 1px solid #d4d4d8; border-radius: 8px; display: grid; gap: 8px; margin: 8px 0 18px; padding: 12px; }
+    .version-switcher span { color: #52525b; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .version-switcher a { color: inherit; text-decoration: none; }
+    .api-portal-list { display: grid; gap: 14px; margin-top: 24px; }
+    .api-portal-spec { border: 1px solid #d4d4d8; border-radius: 8px; padding: 16px; }
+    .api-portal-spec h2 { font-size: 18px; margin: 0 0 8px; }
+    .api-portal-spec p { color: #52525b; margin: 4px 0; }
     .api-playground { border: 1px solid #d4d4d8; border-radius: 8px; margin-top: 28px; padding: 18px; }
     .api-playground form { display: grid; gap: 16px; }
     .api-playground fieldset { border: 1px solid #e4e4e7; border-radius: 8px; display: grid; gap: 10px; margin: 0; padding: 14px; }
@@ -107,6 +117,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
 <body>
   <nav>
     <strong>${escapeHtml(manifest.config.site.name)}</strong>
+    ${versions}
     ${nav}
   </nav>
   <main>
@@ -147,6 +158,16 @@ function renderNavigation(manifest: SiteManifest): string {
     .join("\n");
 }
 
+function renderVersionSwitcher(manifest: SiteManifest): string {
+  const versions = manifest.versions ?? [];
+  if (versions.length === 0) return "";
+
+  return `<section class="version-switcher">
+  <span>Versions</span>
+  ${versions.map((version) => `<a href="${hrefForRoute(version.routePrefix)}">${escapeHtml(version.label)}</a>`).join("\n  ")}
+</section>`;
+}
+
 export function assertHtmlBudget(html: string, budgetBytes: number, route = "route"): void {
   const bytes = Buffer.byteLength(html, "utf8");
   if (bytes > budgetBytes) {
@@ -167,10 +188,10 @@ function renderApiOperation(route: SiteRoute): string {
     ? `<section><h2>Parameters</h2><table><tbody>${operation.parameters.map((parameter) => `<tr><td>${escapeHtml(parameter.name)}</td><td>${escapeHtml(parameter.location)}</td><td>${parameter.required ? "required" : "optional"}</td></tr>`).join("")}</tbody></table></section>`
     : "";
   const requestBody = operation.requestBody
-    ? `<section><h2>Request Body</h2><p>${operation.requestBody.mediaTypes.map(escapeHtml).join(", ") || "No media type declared"}</p>${renderSchemaRefs(operation.requestBody.schemaRefs)}</section>`
+    ? `<section><h2>Request Body</h2><p>${operation.requestBody.mediaTypes.map(escapeHtml).join(", ") || "No media type declared"}</p>${renderSchemaRefs(operation.specId, operation.requestBody.schemaRefs)}</section>`
     : "";
   const responses = operation.responses.length > 0
-    ? `<section><h2>Responses</h2>${operation.responses.map((response) => `<article><h3>${escapeHtml(response.status)}</h3><p>${escapeHtml(response.description)}</p>${response.mediaTypes.length > 0 ? `<p>${response.mediaTypes.map(escapeHtml).join(", ")}</p>` : ""}${renderSchemaRefs(response.schemaRefs)}</article>`).join("")}</section>`
+    ? `<section><h2>Responses</h2>${operation.responses.map((response) => `<article><h3>${escapeHtml(response.status)}</h3><p>${escapeHtml(response.description)}</p>${response.mediaTypes.length > 0 ? `<p>${response.mediaTypes.map(escapeHtml).join(", ")}</p>` : ""}${renderSchemaRefs(operation.specId, response.schemaRefs)}</article>`).join("")}</section>`
     : "";
   const codeSamples = operation.codeSamples.length > 0
     ? `<section><h2>Code Samples</h2>${operation.codeSamples.map((sample) => `<figure><figcaption>${escapeHtml(sample.lang)}</figcaption><pre><code>${escapeHtml(sample.source)}</code></pre></figure>`).join("")}</section>`
@@ -189,6 +210,31 @@ function renderApiOperation(route: SiteRoute): string {
   ${responses}
   ${codeSamples}
   ${playground}
+</article>`;
+}
+
+function renderApiPortal(route: SiteRoute): string {
+  const portal = route.apiPortal;
+  if (!portal) return "";
+
+  return `<article>
+  <h1>${escapeHtml(portal.title)}</h1>
+  <div class="api-portal-list">
+    ${portal.specs.map((spec) => {
+      const version = spec.version ? `<p>${escapeHtml(spec.version.label)}</p>` : "";
+      const operations = `${spec.operationCount} ${spec.operationCount === 1 ? "operation" : "operations"}`;
+      const link = spec.firstOperationRoute
+        ? `<p><a href="${hrefForRoute(spec.firstOperationRoute)}">View reference</a></p>`
+        : "";
+      return `<section class="api-portal-spec">
+      <h2>${escapeHtml(spec.name)}</h2>
+      <p>${escapeHtml(spec.id)}</p>
+      ${version}
+      <p>${escapeHtml(operations)}</p>
+      ${link}
+    </section>`;
+    }).join("\n    ")}
+  </div>
 </article>`;
 }
 
@@ -267,9 +313,9 @@ function renderSchema(route: SiteRoute): string {
 </article>`;
 }
 
-function renderSchemaRefs(schemaRefs: string[]): string {
+function renderSchemaRefs(specId: string, schemaRefs: string[]): string {
   if (schemaRefs.length === 0) return "";
-  return `<p>Schemas: ${schemaRefs.map((schema) => `<a href="/schemas/${escapeHtml(schema)}/">${escapeHtml(schema)}</a>`).join(", ")}</p>`;
+  return `<p>Schemas: ${schemaRefs.map((schema) => `<a href="${hrefForRoute(joinSchemaRoute(specId, schema))}">${escapeHtml(schema)}</a>`).join(", ")}</p>`;
 }
 
 function hrefForRoute(route: string): string {
@@ -278,10 +324,20 @@ function hrefForRoute(route: string): string {
 }
 
 function routeFromPageRef(pageRef: string, contentDirectory: string): string {
+  if (pageRef.startsWith("/")) return normalizeRoute(pageRef);
   let value = pageRef.replace(/\.(mdx|md)$/i, "");
   const contentPrefix = `${contentDirectory.replace(/^\/+|\/+$/g, "")}/`;
   if (value.startsWith(contentPrefix)) value = value.slice(contentPrefix.length);
   if (value === "index") return "/";
   if (value.endsWith("/index")) value = value.slice(0, -"index".length).replace(/\/$/g, "");
   return `/${value.replace(/^\/+|\/+$/g, "")}`;
+}
+
+function joinSchemaRoute(specId: string, schema: string): string {
+  return `/schemas/${specId.replace(/^\/+|\/+$/g, "")}/${schema.replace(/^\/+|\/+$/g, "")}`;
+}
+
+function normalizeRoute(route: string): string {
+  const stripped = route.replace(/\/+$/g, "");
+  return stripped.length === 0 ? "/" : stripped;
 }

@@ -90,6 +90,64 @@ paths:
 
     expect(diagnostics).toContain("Redirect source conflicts with generated route: /old");
   });
+
+  it("reports missing OpenAPI navigation targets", async () => {
+    const root = await createProject({
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        navigation: [{ group: "Missing API", openapi: "missing" }],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: {
+        "docs/index.mdx": "---\ntitle: Home\n---\n# Home\n",
+      },
+    });
+
+    const config = await loadConfig(root);
+    const manifest = await buildManifest(root, config);
+    const diagnostics = validateManifest(manifest);
+
+    expect(diagnostics).toContain("Navigation OpenAPI target does not exist: missing");
+  });
+
+  it("reports OpenAPI specs that reference missing versions", async () => {
+    const root = await createProject({
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        versions: [{ id: "v1", content: { directory: "docs/v1" } }],
+        navigation: [],
+        openapi: { specs: [{ id: "core", source: "./api/openapi.yaml", routeBase: "/api-reference", version: "v3" }] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+      },
+      pages: {
+        "docs/index.mdx": "---\ntitle: Home\n---\n# Home\n",
+        "docs/v1/index.mdx": "---\ntitle: V1\n---\n# V1\n",
+      },
+      openapi: `openapi: 3.1.0
+info:
+  title: Acme
+  version: 1.0.0
+paths:
+  /messages:
+    get:
+      operationId: listMessages
+      responses:
+        "200":
+          description: OK
+`,
+    });
+
+    const config = await loadConfig(root);
+    const manifest = await buildManifest(root, config);
+    const diagnostics = validateManifest(manifest);
+
+    expect(diagnostics).toContain("OpenAPI spec core references missing version: v3");
+  });
 });
 
 async function createProject(input: {

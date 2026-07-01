@@ -9,6 +9,22 @@ const navigationPageSchema = z.object({
   openapi: z.string().optional(),
 });
 
+const versionSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().optional(),
+  routePrefix: z.string().min(1).optional(),
+  content: z.object({
+    directory: z.string().min(1),
+  }),
+  default: z.boolean().default(false),
+}).transform((version) => ({
+  id: version.id,
+  label: version.label ?? version.id,
+  routePrefix: normalizeRoutePrefix(version.routePrefix ?? `/${version.id}`),
+  content: version.content,
+  default: version.default,
+}));
+
 const playgroundSchema = z.object({
   enabled: z.boolean().default(false),
   baseUrl: z.string().url().optional(),
@@ -26,6 +42,7 @@ const openApiSpecSchema = z.object({
   name: z.string().optional(),
   source: z.string().min(1),
   routeBase: z.string().min(1).default("/api-reference"),
+  version: z.string().optional(),
   playground: playgroundSchema,
 });
 
@@ -72,6 +89,7 @@ const configSchema = z.object({
   content: z.object({
     directory: z.string().min(1).default("docs"),
   }).default({ directory: "docs" }),
+  versions: z.array(versionSchema).default([]),
   navigation: z.array(navigationPageSchema).default([]),
   openapi: z.object({
     specs: z.array(openApiSpecSchema).default([]),
@@ -93,6 +111,7 @@ const docsJsonSchema = z.object({
   url: z.string().optional(),
   logo: z.string().optional(),
   navigation: z.array(navigationPageSchema).default([]),
+  versions: z.array(versionSchema).default([]),
   openapi: z.object({
     specs: z.array(openApiSpecSchema).default([]),
   }).default({ specs: [] }),
@@ -103,7 +122,11 @@ const docsJsonSchema = z.object({
   }).optional(),
 });
 
-export type DocumenteeConfig = z.infer<typeof configSchema>;
+type ParsedDocumenteeConfig = z.infer<typeof configSchema>;
+
+export type DocumenteeConfig = Omit<ParsedDocumenteeConfig, "versions"> & {
+  versions?: ParsedDocumenteeConfig["versions"];
+};
 export type NavigationGroup = z.infer<typeof navigationPageSchema>;
 export type OpenApiSpecConfig = z.infer<typeof openApiSpecSchema>;
 
@@ -131,6 +154,7 @@ export async function loadConfig(projectRoot: string): Promise<DocumenteeConfig>
 
   const parsed = configSchema.parse(raw);
   assertUniqueOpenApiIds(parsed.openapi.specs);
+  assertValidVersions(parsed.versions);
   return parsed;
 }
 
@@ -149,6 +173,7 @@ function normalizeDocsJson(input: unknown): DocumenteeConfig {
       logo: parsed.logo,
     },
     content: { directory: "docs" },
+    versions: parsed.versions,
     navigation: parsed.navigation,
     openapi: parsed.openapi,
     seo: parsed.seo,
@@ -169,6 +194,35 @@ function assertUniqueOpenApiIds(specs: OpenApiSpecConfig[]): void {
     }
     seen.add(spec.id);
   }
+}
+
+function assertValidVersions(versions: ParsedDocumenteeConfig["versions"]): void {
+  const ids = new Set<string>();
+  const routePrefixes = new Set<string>();
+  let defaultCount = 0;
+
+  for (const version of versions) {
+    if (ids.has(version.id)) {
+      throw new Error(`Duplicate version id: ${version.id}`);
+    }
+    ids.add(version.id);
+
+    if (routePrefixes.has(version.routePrefix)) {
+      throw new Error(`Duplicate version route prefix: ${version.routePrefix}`);
+    }
+    routePrefixes.add(version.routePrefix);
+
+    if (version.default) defaultCount += 1;
+  }
+
+  if (defaultCount > 1) {
+    throw new Error("Only one version can be marked as default");
+  }
+}
+
+function normalizeRoutePrefix(value: string): string {
+  const normalized = `/${value.replace(/^\/+|\/+$/g, "")}`;
+  return normalized === "/" ? "/" : normalized;
 }
 
 async function exists(filePath: string): Promise<boolean> {
