@@ -30,6 +30,7 @@ describe("renderMdxComponents", () => {
     expect(markdown).toContain('class="doc-icon" aria-label="terminal"');
     expect(markdown).toContain('class="doc-card-group doc-card-group-2"');
     expect(markdown).toContain('class="doc-card" href="/get-started/quickstart"');
+    expect(markdown).toContain('class="doc-card-icon" aria-hidden="true"');
     expect(markdown).toContain("<h3>Quickstart</h3>");
     expect(markdown).toContain('class="doc-accordion-group"');
     expect(markdown).toContain('<details class="doc-accordion">');

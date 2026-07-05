@@ -138,7 +138,7 @@ function transformCards(input: string): string {
   return input.replace(/<Card(?!Group\b)([^>]*)>([\s\S]*?)<\/Card>/g, (_match, attrsSource: string, body: string) => {
     const attrs = parseAttributes(attrsSource);
     const title = attrs.title ?? "Card";
-    const icon = attrs.icon ? `<span class="doc-card-icon">${escapeHtml(iconGlyph(attrs.icon))}</span>` : "";
+    const icon = attrs.icon ? `<span class="doc-card-icon" aria-hidden="true">${escapeHtml(iconGlyph(attrs.icon))}</span>` : "";
     const content = `<h3>${escapeHtml(title)}</h3><p>${escapeHtml(body.trim())}</p>`;
     const href = attrs.href ? ` href="${escapeHtml(attrs.href)}"` : "";
     const tag = attrs.href ? "a" : "article";

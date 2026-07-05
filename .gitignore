@@ -5,3 +5,5 @@ packages/*/dist/
 .DS_Store
 .codex/
 .gemini/
+test-project/
+dist-docs/

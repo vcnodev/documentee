@@ -12,6 +12,9 @@ describe("renderPlaygroundScript", () => {
     expect(script).toContain("Bearer ");
     expect(script).toContain("Content-Type");
     expect(script).toContain("fetch");
+    expect(script).toContain('result.dataset.state = "loading"');
+    expect(script).toContain('result.dataset.state = response.ok ? "success" : "error"');
+    expect(script).toContain('result.dataset.state = "error"');
     expect(script).toContain("response.status");
     expect(script).toContain("response.headers.forEach");
     expect(script).toContain("Network or CORS error");

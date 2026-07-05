@@ -20,6 +20,6 @@ Preset values are defaults. Explicit custom tokens override the preset before th
 
 ## Search
 
-When `search.provider` is `pagefind`, the manifest includes `/search/`. That page renders a static fallback index and loads Pagefind UI assets there only; ordinary docs pages keep the no Documentee client JavaScript baseline.
+When `search.provider` is `pagefind`, the manifest includes `/search/`. That page renders a static fallback index and loads Pagefind UI assets there only. Ordinary docs pages render a lightweight search modal with static suggestions and a small click/filter enhancer; they do not load Pagefind UI assets.
 
 See the [root README](../../README.md), [architecture notes](../../docs/contributing/architecture.md), and [repository rules](../../AGENTS.md).

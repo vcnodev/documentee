@@ -38,4 +38,16 @@ Documentee also recognizes common framework components:
 </CardGroup>
 ```
 
+`CardGroup` honors explicit column counts on desktop and collapses to one column on narrow screens. Decorative card icons are hidden from assistive technology while the card title and description remain readable.
+
+## Generated Page UI
+
+The renderer adds static heading anchors and an "On this page" navigation from `h2` and `h3` headings. Wide docs pages show the page navigation beside the content. Narrow screens show it as a compact disclosure above the page body.
+
+Mobile pages include a top navigation bar with search and a menu disclosure so readers can reach site navigation without scrolling to the bottom of a page.
+
+Generated pages also include breadcrumbs and previous/next page links derived from configured navigation. Rendered code blocks get a lightweight copy button when code is present.
+
+API reference navigation includes endpoint grouping and filtering for larger specs. API playground results expose loading, success, and error states without storing secrets in browser storage.
+
 The renderer emits static HTML and CSS. Components do not require client hydration.

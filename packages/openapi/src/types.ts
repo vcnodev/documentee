@@ -30,7 +30,11 @@ export interface ApiParameter {
   name: string;
   location: string;
   required: boolean;
+  description?: string;
   schemaRef?: string;
+  schemaType?: string;
+  schemaFormat?: string;
+  enumValues?: string[];
 }
 
 export type ApiPlaygroundAuth = "none" | "bearer" | "apiKey";
@@ -48,6 +52,17 @@ export interface ApiRequestBody {
   required: boolean;
   mediaTypes: string[];
   schemaRefs: string[];
+  fields?: ApiSchemaField[];
+}
+
+export interface ApiSchemaField {
+  name: string;
+  required: boolean;
+  description?: string;
+  schemaRef?: string;
+  schemaType?: string;
+  schemaFormat?: string;
+  enumValues?: string[];
 }
 
 export interface ApiResponse {

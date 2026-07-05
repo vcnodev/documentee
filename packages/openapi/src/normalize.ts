@@ -1,4 +1,4 @@
-import type { ApiCodeSample, ApiOperation, ApiParameter, ApiPlayground, ApiRequestBody, ApiResponse, OpenApiDocument, OpenApiOperation } from "./types.js";
+import type { ApiCodeSample, ApiOperation, ApiParameter, ApiPlayground, ApiRequestBody, ApiResponse, ApiSchemaField, OpenApiDocument, OpenApiOperation } from "./types.js";
 
 const METHODS = new Set(["get", "put", "post", "delete", "patch", "options", "head", "trace"]);
 
@@ -76,11 +76,20 @@ function normalizeParameters(parameters: unknown, spec: OpenApiDocument): ApiPar
 
   return parameters.filter(isRecord).map((parameter) => {
     const resolved = resolveLocalRef(parameter, spec) ?? parameter;
+    const schema = isRecord(resolved.schema) ? (resolveLocalRef(resolved.schema, spec) ?? resolved.schema) : undefined;
+    const description = stringValue(resolved.description);
+    const schemaType = schema ? schemaTypeFromValue(schema, spec) : undefined;
+    const schemaFormat = schema ? schemaFormatFromValue(schema, spec) : undefined;
+    const enumValues = schema ? enumValuesFromSchema(schema) : undefined;
     return {
       name: stringValue(resolved.name) ?? "parameter",
       location: stringValue(resolved.in) ?? "query",
       required: resolved.required === true,
       schemaRef: schemaRefFromValue(resolved.schema),
+      ...(description ? { description } : {}),
+      ...(schemaType ? { schemaType } : {}),
+      ...(schemaFormat ? { schemaFormat } : {}),
+      ...(enumValues ? { enumValues } : {}),
     };
   });
 }
@@ -91,11 +100,13 @@ function normalizeRequestBody(requestBody: unknown, spec: OpenApiDocument): ApiR
   const content = isRecord(resolved.content) ? resolved.content : {};
   const mediaTypes = Object.keys(content).sort();
   const schemaRefs = unique(mediaTypes.flatMap((mediaType) => schemaRefsFromMedia(content[mediaType])));
+  const fields = uniqueFields(mediaTypes.flatMap((mediaType) => schemaFieldsFromMedia(content[mediaType], spec)));
 
   return {
     required: resolved.required === true,
     mediaTypes,
     schemaRefs,
+    fields: fields.length > 0 ? fields : undefined,
   };
 }
 
@@ -122,11 +133,85 @@ function schemaRefsFromMedia(media: unknown): string[] {
   return schemaRefFromValue(media.schema) ? [schemaRefFromValue(media.schema)!] : [];
 }
 
+function schemaFieldsFromMedia(media: unknown, spec: OpenApiDocument): ApiSchemaField[] {
+  if (!isRecord(media) || !isRecord(media.schema)) return [];
+  const schema = resolveLocalRef(media.schema, spec) ?? media.schema;
+  return schemaFieldsFromSchema(schema, spec);
+}
+
+function schemaFieldsFromSchema(schema: Record<string, unknown>, spec: OpenApiDocument): ApiSchemaField[] {
+  const resolved = resolveLocalRef(schema, spec) ?? schema;
+  const properties = isRecord(resolved.properties) ? resolved.properties : {};
+  const required = new Set(Array.isArray(resolved.required) ? resolved.required.filter((item): item is string => typeof item === "string") : []);
+
+  return Object.entries(properties)
+    .filter((entry): entry is [string, Record<string, unknown>] => isRecord(entry[1]))
+    .map(([name, value]) => {
+      const fieldSchema = resolveLocalRef(value, spec) ?? value;
+      const description = stringValue(fieldSchema.description);
+      const schemaRef = schemaRefFromValue(value);
+      const schemaType = schemaTypeFromValue(fieldSchema, spec);
+      const schemaFormat = schemaFormatFromValue(fieldSchema, spec);
+      const enumValues = enumValuesFromSchema(fieldSchema);
+      return {
+        name,
+        required: required.has(name),
+        ...(description ? { description } : {}),
+        ...(schemaRef ? { schemaRef } : {}),
+        ...(schemaType ? { schemaType } : {}),
+        ...(schemaFormat ? { schemaFormat } : {}),
+        ...(enumValues ? { enumValues } : {}),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function uniqueFields(fields: ApiSchemaField[]): ApiSchemaField[] {
+  const seen = new Set<string>();
+  const result: ApiSchemaField[] = [];
+  for (const field of fields) {
+    if (seen.has(field.name)) continue;
+    seen.add(field.name);
+    result.push(field);
+  }
+  return result.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function schemaRefFromValue(value: unknown): string | undefined {
   if (!isRecord(value)) return undefined;
   const ref = stringValue(value.$ref);
   if (!ref) return undefined;
   return ref.split("/").filter(Boolean).at(-1);
+}
+
+function schemaTypeFromValue(value: Record<string, unknown>, spec: OpenApiDocument): string | undefined {
+  const resolved = resolveLocalRef(value, spec) ?? value;
+  const type = stringValue(resolved.type);
+  if (type) return type;
+  const ref = schemaRefFromValue(value);
+  if (ref) return ref;
+  if (Array.isArray(resolved.oneOf)) return "oneOf";
+  if (Array.isArray(resolved.anyOf)) return "anyOf";
+  if (Array.isArray(resolved.allOf)) return "allOf";
+  return undefined;
+}
+
+function schemaFormatFromValue(value: Record<string, unknown>, spec: OpenApiDocument): string | undefined {
+  const resolved = resolveLocalRef(value, spec) ?? value;
+  const format = stringValue(resolved.format);
+  if (format) return format;
+  if (stringValue(resolved.type) === "array" && isRecord(resolved.items)) {
+    return schemaFormatFromValue(resolved.items, spec);
+  }
+  return undefined;
+}
+
+function enumValuesFromSchema(schema: Record<string, unknown>): string[] | undefined {
+  if (!Array.isArray(schema.enum)) return undefined;
+  const values = schema.enum
+    .filter((value): value is string | number | boolean => ["string", "number", "boolean"].includes(typeof value))
+    .map(String);
+  return values.length > 0 ? values : undefined;
 }
 
 function resolveLocalRef(value: Record<string, unknown>, spec: OpenApiDocument): Record<string, unknown> | undefined {

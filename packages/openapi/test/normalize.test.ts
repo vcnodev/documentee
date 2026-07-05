@@ -102,13 +102,14 @@ describe("normalizeOperations", () => {
 
     expect(operation.auth).toEqual(["bearerAuth"]);
     expect(operation.parameters).toEqual([
-      { name: "id", location: "path", required: true, schemaRef: undefined },
-      { name: "preview", location: "query", required: false, schemaRef: undefined },
+      { name: "id", location: "path", required: true, schemaRef: undefined, schemaType: "string" },
+      { name: "preview", location: "query", required: false, schemaRef: undefined, schemaType: "boolean" },
     ]);
     expect(operation.requestBody).toEqual({
       required: false,
       mediaTypes: ["application/json"],
       schemaRefs: ["UpdateMessageRequest"],
+      fields: [{ name: "text", required: false, schemaType: "string" }],
     });
     expect(operation.responses).toEqual([
       { status: "200", description: "Updated", mediaTypes: ["application/json"], schemaRefs: ["Message"] },
@@ -116,6 +117,105 @@ describe("normalizeOperations", () => {
     ]);
     expect(operation.beta).toBe(true);
     expect(operation.codeSamples).toEqual([{ lang: "curl", source: "curl https://api.acme.test/messages/id" }]);
+    expect(JSON.stringify(operation)).not.toContain("properties");
+  });
+
+  it("normalizes compact display metadata for parameters and multipart request fields", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.0.0",
+      info: { title: "SwingSwap Backend API", version: "1.0.0" },
+      paths: {
+        "/products/upload": {
+          post: {
+            operationId: "uploadProduct",
+            summary: "Create product with file upload",
+            tags: ["Products"],
+            parameters: [
+              {
+                name: "condition",
+                in: "query",
+                description: "Product condition filter.",
+                schema: { type: "string", enum: ["new", "used"] },
+              },
+            ],
+            requestBody: {
+              required: true,
+              content: {
+                "multipart/form-data": {
+                  schema: { $ref: "#/components/schemas/ProductUploadRequest" },
+                },
+              },
+            },
+            responses: {
+              "201": { description: "Product created with images" },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          ProductUploadRequest: {
+            type: "object",
+            required: ["images", "title"],
+            properties: {
+              images: {
+                type: "array",
+                description: "Product images.",
+                items: { type: "string", format: "binary" },
+              },
+              title: {
+                type: "string",
+                description: "Product title.",
+              },
+              price: {
+                type: "number",
+                format: "float",
+                description: "Asking price.",
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec);
+
+    expect(operation.parameters).toContainEqual({
+      name: "condition",
+      location: "query",
+      required: false,
+      description: "Product condition filter.",
+      schemaRef: undefined,
+      schemaType: "string",
+      enumValues: ["new", "used"],
+    });
+    expect(operation.requestBody).toEqual({
+      required: true,
+      mediaTypes: ["multipart/form-data"],
+      schemaRefs: ["ProductUploadRequest"],
+      fields: [
+        {
+          name: "images",
+          required: true,
+          description: "Product images.",
+          schemaType: "array",
+          schemaFormat: "binary",
+        },
+        {
+          name: "price",
+          required: false,
+          description: "Asking price.",
+          schemaType: "number",
+          schemaFormat: "float",
+        },
+        {
+          name: "title",
+          required: true,
+          description: "Product title.",
+          schemaType: "string",
+        },
+      ],
+    });
     expect(JSON.stringify(operation)).not.toContain("properties");
   });
 
@@ -158,7 +258,7 @@ describe("normalizeOperations", () => {
       auth: "bearer",
       apiKeyLocation: "header",
     });
-    expect(operation.parameters).toContainEqual({ name: "x-trace-id", location: "header", required: false, schemaRef: undefined });
+    expect(operation.parameters).toContainEqual({ name: "x-trace-id", location: "header", required: false, schemaRef: undefined, schemaType: "string" });
     expect(operation.requestBody?.required).toBe(true);
   });
 
@@ -248,7 +348,7 @@ describe("normalizeOperations", () => {
 
     expect(operation.auth).toEqual(["apiKeyAuth"]);
     expect(operation.parameters).toEqual([
-      { name: "traceId", location: "header", required: false, schemaRef: "TraceId" },
+      { name: "traceId", location: "header", required: false, schemaRef: "TraceId", schemaType: "string" },
     ]);
     expect(operation.requestBody).toEqual({
       required: true,

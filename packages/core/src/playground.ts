@@ -12,6 +12,7 @@ export function renderPlaygroundScript(): string {
       if (!result) return;
 
       result.textContent = "Sending request...";
+      result.dataset.state = "loading";
       if (submit) submit.setAttribute("disabled", "true");
 
       try {
@@ -55,6 +56,7 @@ export function renderPlaygroundScript(): string {
         const responseHeaders = [];
         response.headers.forEach((value, key) => responseHeaders.push(key + ": " + value));
         const text = await response.text();
+        result.dataset.state = response.ok ? "success" : "error";
         result.textContent = [
           "Status: " + response.status + " " + response.statusText,
           "",
@@ -64,6 +66,7 @@ export function renderPlaygroundScript(): string {
         ].join("\\n");
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        result.dataset.state = "error";
         result.textContent = "Network or CORS error: " + message;
       } finally {
         if (submit) submit.removeAttribute("disabled");

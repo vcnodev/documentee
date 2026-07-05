@@ -6,6 +6,7 @@ Policy:
 
 - Do not ship Documentee client-side JavaScript in strict server-rendered mode.
 - Loading Pagefind UI on `/search/` is allowed only when `search.provider` is `pagefind`; ordinary docs pages must not load Pagefind scripts.
+- Pagefind-enabled static docs may include the small search modal enhancer on ordinary pages. Keep it scoped to opening, closing, focusing, and filtering static suggestions.
 - Do not inline full OpenAPI schema graphs into every operation page.
 - Split large references into operation, schema, example, and search-result routes.
 - Keep route-level HTML payload budgets in tests.
