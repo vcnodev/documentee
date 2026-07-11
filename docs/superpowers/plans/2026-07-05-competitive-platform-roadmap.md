@@ -125,7 +125,7 @@ rm -rf dist-example && pnpm example:build
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `packages/core/test/mdx-components.test.ts`
 
-- [ ] Add failing renderer coverage for a linked `CardGroup`.
+- [x] Add failing renderer coverage for a linked `CardGroup`.
 
 Expected HTML should not contain nested anchors:
 
@@ -136,13 +136,13 @@ expect(html).not.toContain('<a class="doc-heading-anchor" href="#quickstart"');
 expect(html).not.toContain('<a class="doc-card" href="/get-started/quickstart"><span');
 ```
 
-- [ ] Run focused tests and confirm failure:
+- [x] Run focused tests and confirm failure:
 
 ```bash
 pnpm --filter @documentee/core test -- static-renderer.test.ts mdx-components.test.ts
 ```
 
-- [ ] Update `enhanceContentHeadings` so it only anchors top-level article headings, not headings inside `.doc-card`, `.api-portal-card`, `.search-fallback-list`, `.doc-page-nav`, or other linked/card UI.
+- [x] Update `enhanceContentHeadings` so it only anchors top-level article headings, not headings inside `.doc-card`, `.api-portal-card`, `.search-fallback-list`, `.doc-page-nav`, or other linked/card UI.
 
 Implementation direction:
 
@@ -169,8 +169,8 @@ function enhanceContentHeadings(html: string): { html: string; headings: TocHead
 
 The final implementation may use smaller helpers, but it must preserve headings inside linked cards without injecting heading links.
 
-- [ ] Run focused tests and confirm green.
-- [ ] Rebuild dogfood docs and visually inspect `/` at desktop and mobile widths.
+- [x] Run focused tests and confirm green.
+- [x] Rebuild dogfood docs and visually inspect `/` at desktop and mobile widths.
 
 ```bash
 pnpm docs:build
@@ -197,7 +197,7 @@ Acceptance:
 - Modify `README.md`
 - Modify `docs/contributing/architecture.md`
 
-- [ ] Add failing tests for excluding `docs/superpowers/**` from generated public routes, search, sitemap, and AI-readable output.
+- [x] Add failing tests for excluding `docs/superpowers/**` from generated public routes, search, sitemap, and AI-readable output.
 
 Config shape:
 
@@ -216,10 +216,10 @@ expect(renderSitemapXml(manifest)).not.toContain("/superpowers/");
 expect(renderLlmsFull(manifest)).not.toContain("superpowers");
 ```
 
-- [ ] Implement `content.exclude` using glob-compatible matching relative to the content directory.
-- [ ] Add `robots`, `sitemap`, `search`, and `llms` filtering tests.
-- [ ] Update dogfood config to exclude internal planning/spec pages unless a page is intentionally linked in public docs.
-- [ ] Update README with an example and explain that excluded content is not built.
+- [x] Implement `content.exclude` using glob-compatible matching relative to the content directory.
+- [x] Add `robots`, `sitemap`, `search`, and `llms` filtering tests.
+- [x] Update dogfood config to exclude internal planning/spec pages unless a page is intentionally linked in public docs.
+- [x] Update README with an example and explain that excluded content is not built.
 
 Acceptance:
 
@@ -230,13 +230,13 @@ Acceptance:
 ### Task 1.3: Create Visual Smoke Test Harness
 
 **Files:**
-- Create `packages/core/test/visual-smoke.test.ts` or `packages/cli/test/screenshots.test.ts`
-- Create `packages/cli/src/commands/screenshots.ts` if exposed as CLI
-- Modify `package.json` if adding a script
-- Modify `docs/contributing/testing.md`
+- [x] Create `packages/cli/test/screenshots.test.ts`.
+- [x] Create `packages/cli/src/commands/screenshots.ts`.
+- [x] Modify `package.json`.
+- [x] Modify `docs/contributing/testing.md`.
 
-- [ ] Add a focused test or script that builds `dist-docs` and captures key pages at desktop/mobile widths using local Chrome when available.
-- [ ] Check minimum visual invariants through DOM/CSS assertions:
+- [x] Add a focused test or script that builds `dist-docs` and captures key pages at desktop/mobile widths using local Chrome when available.
+- [x] Check minimum visual invariants through DOM/CSS assertions:
 
 ```ts
 expect(await page.locator(".doc-card").count()).toBeGreaterThanOrEqual(4);
@@ -244,13 +244,13 @@ expect(await page.locator(".doc-card h3").first().isVisible()).toBe(true);
 expect(await page.locator(".doc-mobile-header").isVisible()).toBe(true);
 ```
 
-- [ ] Save screenshots to a generated ignored directory such as `.documentee-screenshots/`.
-- [ ] Do not make full screenshot comparison required in CI until the environment is stable; start with an opt-in command.
+- [x] Save screenshots to a generated ignored directory such as `.documentee-screenshots/`.
+- [x] Do not make full screenshot comparison required in CI until the environment is stable; start with an opt-in command.
 
 Acceptance:
 
-- Developers can run one command to visually inspect dogfood and example docs.
-- The command catches broken card rendering and missing mobile navigation.
+- [x] Developers can run one command to visually inspect the dogfood docs homepage.
+- [x] The command catches broken card rendering and missing mobile navigation.
 
 ---
 
@@ -266,7 +266,7 @@ Acceptance:
 - Modify `docs/api-reference/config.mdx`
 - Modify `README.md`
 
-- [ ] Add config tests for:
+- [x] Add config tests for:
 
 ```ts
 layout: {
@@ -279,14 +279,14 @@ layout: {
 }
 ```
 
-- [ ] Supported values:
+- [x] Supported values:
 
 ```ts
 type NavLayout = "sidebar" | "topbar" | "hybrid";
 type TocLayout = "right" | "inline" | "hidden";
 ```
 
-- [ ] Implement parsing with safe defaults:
+- [x] Implement parsing with safe defaults:
 
 ```ts
 layout: {
@@ -297,7 +297,7 @@ layout: {
 }
 ```
 
-- [ ] Document the config.
+- [x] Document the config.
 
 Acceptance:
 
@@ -312,7 +312,7 @@ Acceptance:
 - Modify `docs/index.mdx`
 - Modify `examples/basic/docs/index.mdx`
 
-- [ ] Add tests asserting shell landmarks and key classes:
+- [x] Add tests asserting shell landmarks and key classes:
 
 ```ts
 expect(html).toContain('class="doc-app-shell"');
@@ -321,7 +321,7 @@ expect(html).toContain('class="doc-content-frame"');
 expect(html).toContain('class="doc-footer"');
 ```
 
-- [ ] Refine CSS:
+- [x] Refine CSS:
   - Better page background and content surface contrast.
   - More deliberate heading scale.
   - Larger first paragraph only on page intros.
@@ -330,7 +330,7 @@ expect(html).toContain('class="doc-footer"');
   - Footer with edit link, last updated, previous/next.
   - Active TOC highlight if static-only feasible through CSS or minimal opt-in script.
 
-- [ ] Keep small HTML policy intact. Any script must be tied to a feature flag.
+- [x] Keep small HTML policy intact. Any script must be tied to a feature flag.
 
 Acceptance:
 
@@ -349,7 +349,7 @@ Acceptance:
 - Modify `packages/core/README.md`
 - Modify `docs/api-reference/config.mdx`
 
-- [ ] Add presets:
+- [x] Add presets:
 
 ```ts
 type ThemePreset =
@@ -365,9 +365,9 @@ type ThemePreset =
   | "minimal";
 ```
 
-- [ ] Add snapshot-style CSS variable assertions for each preset.
-- [ ] Ensure explicit custom tokens override preset tokens.
-- [ ] Add real dark-mode variables for each preset where `darkMode: true`.
+- [x] Add snapshot-style CSS variable assertions for each preset.
+- [x] Ensure explicit custom tokens override preset tokens.
+- [x] Add real dark-mode variables for each preset where `darkMode: true`.
 
 Acceptance:
 
@@ -382,14 +382,14 @@ Acceptance:
 - Modify `packages/search/src/pagefind.ts`
 - Modify `packages/search/test/pagefind.test.ts`
 
-- [ ] Improve static search route layout.
-- [ ] Improve modal suggestion grouping:
+- [x] Improve static search route layout.
+- [x] Improve modal suggestion grouping:
   - Pages
   - API endpoints
   - Guides
   - Recent/featured docs if configured
-- [ ] Add keyboard affordance display without relying on keyboard-only interaction.
-- [ ] Ensure Pagefind assets still only load on `/search/`.
+- [x] Add keyboard affordance display without relying on keyboard-only interaction.
+- [x] Ensure Pagefind assets still only load on `/search/`.
 
 Acceptance:
 
@@ -409,7 +409,7 @@ Acceptance:
 - Modify `packages/openapi/src/normalize.ts`
 - Modify `packages/openapi/test/normalize.test.ts`
 
-- [ ] Add tests for:
+- [x] Add tests for:
   - Object fields.
   - Nested object fields.
   - Arrays and array item refs.
@@ -434,7 +434,8 @@ expect(operation.requestBody?.fields).toContainEqual({
 });
 ```
 
-- [ ] Keep normalized output compact. Do not embed entire schema graphs into every operation.
+- [x] Extend compact normalized schema representation.
+- [x] Keep normalized output compact. Do not embed entire schema graphs into every operation.
 
 Acceptance:
 
@@ -447,10 +448,10 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `docs/api-reference/openapi.mdx`
 
-- [ ] Render object schemas as expandable static sections using `<details>`.
-- [ ] Show field name, required state, type, enum, default, deprecated, nullable, and description.
-- [ ] Link schema refs to generated schema pages.
-- [ ] Render composition with clear labels:
+- [x] Render object schemas as expandable static sections using `<details>`.
+- [x] Show field name, required state, type, enum, default, deprecated, nullable, and description.
+- [x] Link schema refs to generated schema pages.
+- [x] Render composition with clear labels:
   - One of
   - Any of
   - All of
@@ -468,7 +469,7 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `docs/api-reference/openapi.mdx`
 
-- [ ] Generate static examples for:
+- [x] Generate static examples for:
   - cURL
   - JavaScript `fetch`
   - Python `requests`
@@ -483,7 +484,7 @@ expect(html).toContain("requests.get");
 expect(html).toContain("http.NewRequest");
 ```
 
-- [ ] Add `CodeGroup`-style static tabs. Since static HTML cannot switch tabs without JS, render examples stacked or use `<details>` sections unless a tiny opt-in tab script is accepted.
+- [x] Add `CodeGroup`-style static tabs. Since static HTML cannot switch tabs without JS, render examples stacked or use `<details>` sections unless a tiny opt-in tab script is accepted.
 
 Acceptance:
 
@@ -499,8 +500,8 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `examples/basic/documentee.config.ts`
 
-- [ ] Add server selector when OpenAPI servers are present.
-- [ ] Add environment presets:
+- [x] Add server selector when OpenAPI servers are present.
+- [x] Add environment presets:
 
 ```ts
 playground: {
@@ -512,10 +513,10 @@ playground: {
 }
 ```
 
-- [ ] Add request preview before send.
-- [ ] Add response headers/status display.
-- [ ] Add clear error states for CORS/network/auth failures.
-- [ ] Keep secrets out of storage.
+- [x] Add request preview before send.
+- [x] Add response headers/status display.
+- [x] Add clear error states for CORS/network/auth failures.
+- [x] Keep secrets out of storage.
 
 Acceptance:
 
@@ -531,7 +532,7 @@ Acceptance:
 - Create `packages/cli/test/diff-openapi.test.ts`
 - Modify `docs/api-reference/cli.mdx`
 
-- [ ] Compare two OpenAPI files and report:
+- [x] Compare two OpenAPI files and report:
   - Added operations.
   - Removed operations.
   - Changed request fields.
@@ -565,7 +566,7 @@ Acceptance:
 - Modify `packages/core/src/static-renderer.ts` or build pipeline where assets are written
 - Modify `docs/ai-agents/index.mdx`
 
-- [ ] Add structured output:
+- [x] Add structured output:
 
 ```json
 {
@@ -586,9 +587,9 @@ Acceptance:
 }
 ```
 
-- [ ] Include API operations as structured route entries.
-- [ ] Exclude private/hidden content.
-- [ ] Add tests ensuring `docs/superpowers/**` is excluded when configured.
+- [x] Include API operations as structured route entries.
+- [x] Exclude private/hidden content.
+- [x] Add tests ensuring `docs/superpowers/**` is excluded when configured.
 
 Acceptance:
 
@@ -602,7 +603,7 @@ Acceptance:
 - Modify `packages/llms/src/render.ts`
 - Modify `packages/llms/test/render.test.ts`
 
-- [ ] Split pages into semantic chunks:
+- [x] Split pages into semantic chunks:
   - Heading path.
   - Source route.
   - Source file.
@@ -633,20 +634,20 @@ Acceptance:
 - Modify `docs/ai-agents/index.mdx`
 - Modify `README.md`
 
-- [ ] Add command:
+- [x] Add command:
 
 ```bash
 documentee generate-mcp . --out .documentee-mcp
 ```
 
-- [ ] Generated server should expose read-only tools:
+- [x] Generated server should expose read-only tools:
   - `search_docs(query)`
   - `read_doc(route)`
   - `list_api_operations()`
   - `read_api_operation(method, path)`
 
-- [ ] Generate from built manifest and AI chunk index.
-- [ ] Keep implementation local and self-hosted.
+- [x] Generate from built manifest and AI chunk index.
+- [x] Keep implementation local and self-hosted.
 
 Acceptance:
 
@@ -661,7 +662,7 @@ Acceptance:
 - Modify build pipeline to emit `skill.md`
 - Modify `docs/ai-agents/doc-builder-guide.mdx`
 
-- [ ] Generate `skill.md` containing:
+- [x] Generate `skill.md` containing:
   - Project overview.
   - Reading order.
   - Important routes.
@@ -681,7 +682,7 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `docs/api-reference/config.mdx`
 
-- [ ] Add opt-in config only. Do not make this default:
+- [x] Add opt-in config only. Do not make this default:
 
 ```ts
 assistant: {
@@ -690,8 +691,8 @@ assistant: {
 }
 ```
 
-- [ ] Render a small assistant/search entry that sends query plus route context to the configured endpoint.
-- [ ] Keep no endpoint implementation in core.
+- [x] Render a small assistant/search entry that sends query plus route context to the configured endpoint.
+- [x] Keep no endpoint implementation in core.
 
 Acceptance:
 
@@ -717,7 +718,7 @@ Acceptance:
 - Modify `docs/api-reference/config.mdx`
 - Modify `README.md`
 
-- [ ] Config:
+- [x] Config:
 
 ```ts
 i18n: {
@@ -730,10 +731,10 @@ i18n: {
 }
 ```
 
-- [ ] Generate locale-prefixed routes except default locale unless configured otherwise.
-- [ ] Add locale switcher.
-- [ ] Set `<html lang>` and `dir`.
-- [ ] Add validation for missing default locale content.
+- [x] Generate locale-prefixed routes except default locale unless configured otherwise.
+- [x] Add locale switcher.
+- [x] Set `<html lang>` and `dir`.
+- [x] Add validation for missing default locale content.
 
 Acceptance:
 
@@ -750,7 +751,7 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `examples/basic/*`
 
-- [ ] Support version lifecycle metadata:
+- [x] Support version lifecycle metadata:
 
 ```ts
 versions: [
@@ -759,12 +760,22 @@ versions: [
 ]
 ```
 
-- [ ] Show latest/deprecated badges in version switcher.
-- [ ] Add canonical route behavior for latest version.
+- [x] Show latest/deprecated badges in version switcher.
+- [x] Add canonical route behavior for latest version.
+
+Implementation notes:
+
+- Added `latest` and `deprecated` booleans to version config parsing, with defaults of `false`.
+- Added validation so only one configured version can be marked `latest`.
+- Exposed lifecycle flags on manifest version references.
+- Added `canonicalRoute` metadata to latest-version page and API operation routes so SEO can point to unversioned equivalents.
+- Updated the static version switcher to render compact `Latest` and `Deprecated` badges without adding client JavaScript.
+- Updated README/config docs/package docs/example config for lifecycle metadata.
+- Added focused tests for config parsing/validation, manifest canonical metadata, SEO canonical output, and version switcher badge rendering.
 
 Acceptance:
 
-- Versioning feels intentional and scalable.
+- [x] Versioning feels intentional and scalable.
 
 ### Task 5.3: Plugin API
 
@@ -776,7 +787,7 @@ Acceptance:
 - Create `packages/core/test/plugins.test.ts`
 - Modify `docs/contributing/architecture.md`
 
-- [ ] Define narrow hooks:
+- [x] Define narrow hooks:
 
 ```ts
 export interface DocumenteePlugin {
@@ -787,13 +798,24 @@ export interface DocumenteePlugin {
 }
 ```
 
-- [ ] Keep plugins optional and deterministic.
-- [ ] Do not allow plugins to fork the content pipeline.
+- [x] Keep plugins optional and deterministic.
+- [x] Do not allow plugins to fork the content pipeline.
+
+Implementation notes:
+
+- Added `packages/core/src/plugins.ts` with typed `DocumenteePlugin` hooks for `transformManifest`, `transformHtml`, and `validate`.
+- Added optional TypeScript config parsing for plugin objects and validation for required plugin names.
+- Applied `transformManifest` only after core finishes content, OpenAPI, version, locale, and generated route construction.
+- Added async `renderRouteWithPlugins` and made static build/dev rendering apply HTML hooks while keeping the existing synchronous `renderRoute` pure.
+- Added `validateManifestWithPlugins` and made CLI validation include plugin diagnostics.
+- Exported plugin types/utilities from `@documentee/core`.
+- Documented the plugin surface in README, config reference, core README, and architecture docs.
+- Added focused tests for config parsing, manifest transforms, HTML transforms, static-site output, and validation diagnostics.
 
 Acceptance:
 
-- Users can extend output without modifying core.
-- Architecture boundaries stay intact.
+- [x] Users can extend output without modifying core.
+- [x] Architecture boundaries stay intact.
 
 ### Task 5.4: Richer Static Authoring Components
 
@@ -803,20 +825,28 @@ Acceptance:
 - Modify `docs/components.mdx`
 - Modify `examples/basic/docs/components.mdx`
 
-- [ ] Add or polish:
-  - `PackageInstall`
-  - `CliCommand`
-  - `Mermaid`
-  - `Update`
-  - `Changelog`
-  - `Columns`
-  - `FeatureGrid`
-  - `EndpointCard`
-  - `OpenApiOperation`
+- [x] Add or polish:
+  - [x] `PackageInstall`
+  - [x] `CliCommand`
+  - [x] `Mermaid`
+  - [x] `Update`
+  - [x] `Changelog`
+  - [x] `Columns`
+  - [x] `FeatureGrid`
+  - [x] `EndpointCard`
+  - [x] `OpenApiOperation`
+
+Implementation notes:
+
+- Added static MDX transforms for install blocks, CLI commands, Mermaid code blocks, changelog updates, columns, feature grids, endpoint cards, and compact OpenAPI operation cards.
+- Kept Mermaid static by emitting `language-mermaid` code blocks instead of adding client-side diagram JavaScript.
+- Added renderer CSS for the new authoring components with responsive grids and existing theme tokens.
+- Updated dogfood and example component docs to demonstrate the richer authoring set.
+- Added focused tests proving the new authoring tags transform to static HTML and have default renderer styles.
 
 Acceptance:
 
-- Authoring feels closer to Mintlify/Nextra while staying static-first.
+- [x] Authoring feels closer to Mintlify/Nextra while staying static-first.
 
 ---
 
@@ -831,7 +861,7 @@ Acceptance:
 - Modify `packages/cli/test/migrate.test.ts`
 - Modify `docs/api-reference/cli.mdx`
 
-- [ ] Add migration modes:
+- [x] Add migration modes:
 
 ```bash
 documentee migrate mintlify ./source ./target
@@ -841,19 +871,29 @@ documentee migrate scalar ./source ./target
 documentee migrate redocly ./source ./target
 ```
 
-- [ ] Convert common config:
-  - Navigation.
-  - Theme color.
-  - OpenAPI specs.
-  - Redirects.
-  - Search config.
-  - SEO metadata.
+- [x] Convert common config:
+  - [x] Navigation.
+  - [x] Theme color.
+  - [x] OpenAPI specs.
+  - [x] Redirects.
+  - [x] Search config.
+  - [x] SEO metadata.
 
-- [ ] Convert common MDX components to Documentee-compatible static components.
+- [x] Convert common MDX components to Documentee-compatible static components.
+
+Implementation notes:
+
+- Added `scalar` and `redocly` migration source modes.
+- Expanded Mintlify migration to map description, theme colors, redirects, search provider, and SEO metadata.
+- Expanded Docusaurus migration to read common `docusaurus.config.json` title/tagline/color-mode metadata.
+- Added Scalar config mapping for title, description, theme color, search, and OpenAPI source.
+- Added Redocly YAML mapping for title, description, primary theme color, OpenAPI API roots, redirects, search, and SEO title template.
+- Kept existing MDX compatibility transforms for imports, Docusaurus admonitions/tabs, and Nextra card groups.
+- Updated CLI docs and package README with the new migration modes and conversion surface.
 
 Acceptance:
 
-- A real small Mintlify or Docusaurus project migrates into a buildable Documentee project.
+- [x] A real small Mintlify or Docusaurus project migrates into a buildable Documentee project.
 
 ### Task 6.2: Add Migration Report
 
@@ -861,15 +901,22 @@ Acceptance:
 - Modify `packages/cli/src/commands/migrate.ts`
 - Modify `packages/cli/test/migrate.test.ts`
 
-- [ ] Emit `migration-report.md` with:
+- [x] Emit `migration-report.md` with:
   - Files converted.
   - Unsupported components.
   - Broken links found.
   - Manual follow-up items.
 
+Implementation notes:
+
+- Added a migration report model to `packages/cli/src/commands/migrate.ts` and emit `migration-report.md` after every supported migration source.
+- Report generation records converted Markdown/MDX files, flags unsupported uppercase JSX components after compatibility transforms, validates relative local documentation links after copy completion, and writes explicit manual cleanup items.
+- Added CLI tests covering report creation, converted files, unsupported components, broken links, and source labeling.
+- Updated CLI reference docs and package README so migrated users know where cleanup guidance is written.
+
 Acceptance:
 
-- Users understand exactly what needs manual cleanup.
+- [x] Users understand exactly what needs manual cleanup.
 
 ### Task 6.3: Create Realistic Templates
 
@@ -881,7 +928,7 @@ Acceptance:
 - Create `templates/enterprise-docs/*`
 - Modify `README.md`
 
-- [ ] Add:
+- [x] Add:
 
 ```bash
 documentee init --template api-first
@@ -891,7 +938,15 @@ documentee init --template enterprise-docs
 
 Acceptance:
 
-- New users can start with a credible docs site in one command.
+- [x] New users can start with a credible docs site in one command.
+
+Implementation notes:
+
+- Added `InitTemplate` support for `api-first`, `product-docs`, and `enterprise-docs` in `packages/cli/src/commands/init.ts`.
+- Added CLI parsing for `documentee init <project> --template <name>` and `documentee init --template <name>`, with current-directory scaffolding for the latter.
+- Created source template folders under `templates/api-first`, `templates/product-docs`, and `templates/enterprise-docs`.
+- Added CLI tests that initialize, validate, and build each template, verify current-directory template parsing, and assert the source template folders exist.
+- Updated root README, CLI reference docs, and package README with the new template commands.
 
 ---
 
@@ -907,7 +962,7 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `docs/api-reference/config.mdx`
 
-- [ ] Config:
+- [x] Config:
 
 ```ts
 feedback: {
@@ -916,13 +971,21 @@ feedback: {
 }
 ```
 
-- [ ] Render helpful/not helpful buttons only when configured.
-- [ ] Send route, title, vote, and optional comment to endpoint.
-- [ ] Make script opt-in.
+- [x] Render helpful/not helpful buttons only when configured.
+- [x] Send route, title, vote, and optional comment to endpoint.
+- [x] Make script opt-in.
+
+Implementation notes:
+
+- Added optional `feedback` config validation in `packages/core/src/config.ts`, including safe site-path/http/https endpoint validation and required endpoint checks when enabled.
+- Added a static renderer feedback section that is omitted unless `feedback.enabled` and `feedback.endpoint` are configured.
+- Added an opt-in `data-documentee-feedback` script that posts route, title, vote, and optional comment to the configured endpoint.
+- Added focused config and static-renderer coverage for enabled feedback, unsafe endpoint rejection, disabled/no-script behavior, and payload-related markup/script output.
+- Updated config docs and README examples for the new feedback setting.
 
 Acceptance:
 
-- Static sites can collect feedback without Documentee hosting.
+- [x] Static sites can collect feedback without Documentee hosting.
 
 ### Task 7.2: Add Audit Command
 
@@ -932,7 +995,7 @@ Acceptance:
 - Modify `packages/cli/src/index.ts`
 - Modify `docs/api-reference/cli.mdx`
 
-- [ ] Audit checks:
+- [x] Audit checks:
   - Broken internal links.
   - Missing descriptions.
   - Missing h1.
@@ -953,7 +1016,16 @@ documentee audit . --format json
 
 Acceptance:
 
-- Audit output is actionable and stable in CI.
+- [x] Audit output is actionable and stable in CI.
+
+Implementation notes:
+
+- Added `packages/cli/src/commands/audit.ts` with stable Markdown and JSON output.
+- Audit records include category, severity, message, route, and source metadata where available.
+- Checks cover core validation diagnostics, missing descriptions, missing H1 headings, duplicate titles, public private/draft paths, OpenAPI operations without examples, missing `llms.txt` site description metadata, oversized pages, Pagefind search route presence, and sitemap/robots consistency.
+- Added CLI routing for `documentee audit <project>` and `documentee audit <project> --format json`.
+- Added focused audit tests for Markdown output, JSON output, and CLI printing.
+- Updated CLI reference docs, package README, root README, and this roadmap.
 
 ### Task 7.3: Add Lightweight Analytics Hooks
 
@@ -963,7 +1035,7 @@ Acceptance:
 - Modify `packages/core/test/static-renderer.test.ts`
 - Modify `docs/api-reference/config.mdx`
 
-- [ ] Support script injection for analytics providers without making core depend on them:
+- [x] Support script injection for analytics providers without making core depend on them:
 
 ```ts
 analytics: {
@@ -972,12 +1044,20 @@ analytics: {
 }
 ```
 
-- [ ] Validate dangerous inline input carefully.
-- [ ] Prefer external script URLs over arbitrary inline JavaScript.
+- [x] Validate dangerous inline input carefully.
+- [x] Prefer external script URLs over arbitrary inline JavaScript.
+
+Implementation notes:
+
+- Added optional `analytics` config with `provider: "custom"` and `scriptSrc`.
+- Validated `scriptSrc` as a site path or `http`/`https` URL, rejecting dangerous protocols such as `javascript:`.
+- Rendered a single deferred external analytics script only when analytics config is present.
+- Added focused config and static-renderer tests for disabled-by-default behavior, configured script output, and unsafe URL rejection.
+- Updated config docs, README examples, and this roadmap.
 
 Acceptance:
 
-- Users can connect analytics while static pages remain clean by default.
+- [x] Users can connect analytics while static pages remain clean by default.
 
 ### Task 7.4: Build Public Proof
 
@@ -988,7 +1068,7 @@ Acceptance:
 - Modify `README.md`
 - Modify `examples/*`
 
-- [ ] Add pages:
+- [x] Add pages:
   - `Documentee vs Mintlify`
   - `Documentee vs Docusaurus`
   - `Documentee vs Nextra`
@@ -996,13 +1076,21 @@ Acceptance:
   - `Static API Docs`
   - `AI-Ready Docs`
 
-- [ ] Keep comparison honest:
+- [x] Keep comparison honest:
   - Documentee wins on local/static/portable/AI-readable OSS workflows.
   - Managed platforms win on hosted collaboration and analytics until Documentee explicitly provides alternatives.
 
+Implementation notes:
+
+- Added comparison pages under `docs/comparisons/` for Mintlify, Docusaurus, Nextra, and Scalar.
+- Added showcase pages under `docs/showcase/` for static API docs and AI-ready docs.
+- Updated dogfood navigation and homepage cards so comparison and showcase surfaces are discoverable.
+- Updated README and the basic example copy to point readers toward the public proof pages.
+- Kept claims grounded in durable positioning from official competitor pages and framed Documentee tradeoffs honestly.
+
 Acceptance:
 
-- Users understand why Documentee exists and when to choose it.
+- [x] Users understand why Documentee exists and when to choose it.
 
 ---
 
@@ -1010,36 +1098,36 @@ Acceptance:
 
 ### Gate A: Visual Quality
 
-- [ ] Dogfood homepage cards render correctly.
-- [ ] Mobile nav/search visible before scrolling.
-- [ ] API operation pages have no orphan layout.
-- [ ] Search page looks intentional.
-- [ ] Dark mode is not muddy.
-- [ ] No accidental internal pages in public docs.
+- [x] Dogfood homepage cards render correctly.
+- [x] Mobile nav/search visible before scrolling.
+- [x] API operation pages have no orphan layout.
+- [x] Search page looks intentional.
+- [x] Dark mode is not muddy.
+- [x] No accidental internal pages in public docs.
 
 ### Gate B: API Docs Quality
 
-- [ ] Request body fields are understandable.
-- [ ] Response examples render.
-- [ ] Code samples render.
-- [ ] Auth requirements are clear.
-- [ ] Playground has server/environment selection.
-- [ ] Large specs have usable tag navigation and endpoint filtering.
+- [x] Request body fields are understandable.
+- [x] Response examples render.
+- [x] Code samples render.
+- [x] Auth requirements are clear.
+- [x] Playground has server/environment selection.
+- [x] Large specs have usable tag navigation and endpoint filtering.
 
 ### Gate C: AI Readiness
 
-- [ ] `llms.txt` passes existing tests.
-- [ ] `llms-full.txt` excludes private content.
-- [ ] `llms.json` exists and is structured.
-- [ ] MCP generator works locally.
-- [ ] `skill.md` gives agents useful project-specific instructions.
+- [x] `llms.txt` passes existing tests.
+- [x] `llms-full.txt` excludes private content.
+- [x] `llms.json` exists and is structured.
+- [x] MCP generator works locally.
+- [x] `skill.md` gives agents useful project-specific instructions.
 
 ### Gate D: Framework Maturity
 
-- [ ] i18n works for at least English/French/Arabic fixture routes.
-- [ ] Version switcher handles latest/deprecated versions.
-- [ ] Plugin API has one working test plugin.
-- [ ] Migration report identifies unsupported input.
+- [x] i18n works for at least English/French/Arabic fixture routes.
+- [x] Version switcher handles latest/deprecated versions.
+- [x] Plugin API has one working test plugin.
+- [x] Migration report identifies unsupported input.
 
 ### Gate E: Full Verification
 
@@ -1060,6 +1148,16 @@ Expected:
 - All commands pass.
 - Generated `dist-docs` contains no unintended internal planning/spec pages.
 - Generated `dist-example` demonstrates docs, search, API portal, API operation, playground, and AI outputs.
+
+Latest release-gate notes:
+
+- Added a dogfood manifest regression test to keep `docs/superpowers/**` out of public routes while preserving comparison and showcase routes.
+- Restored the dogfood `content.exclude: ["superpowers/**"]` config after a build check showed internal plan/spec pages in `dist-docs`.
+- Verified `pnpm docs:validate && pnpm docs:build`, then confirmed generated `dist-docs` contains no `superpowers`, `plans`, or `specs` output paths.
+- Ran fresh visual smoke screenshots for dogfood home desktop/mobile, dogfood OpenAPI/search pages, and the example API operation page.
+- Used existing renderer/OpenAPI tests as evidence for request-body field and response-example rendering.
+- Verified the enabled Core API example operation renders the browser playground with Production/Sandbox environment options, base URL editing, request preview, and response output regions.
+- Re-ran the full verification gate on 2026-07-11: `pnpm test`, `pnpm typecheck`, `pnpm build`, `pnpm docs:validate`, `pnpm validate`, `pnpm docs:build`, clean `pnpm example:build`, and `pnpm docs:screenshots` all exited 0.
 
 ---
 
@@ -1095,4 +1193,3 @@ Recommended order:
 - Replacing Docusaurus as a broad plugin ecosystem immediately.
 
 These can become future commercial or ecosystem layers after the open-source static foundation is excellent.
-

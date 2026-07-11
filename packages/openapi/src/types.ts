@@ -40,12 +40,23 @@ export interface ApiParameter {
 export type ApiPlaygroundAuth = "none" | "bearer" | "apiKey";
 export type ApiPlaygroundApiKeyLocation = "header" | "query";
 
+export interface ApiServerUrl {
+  url: string;
+  description?: string;
+}
+
+export interface ApiPlaygroundEnvironment {
+  name: string;
+  baseUrl: string;
+}
+
 export interface ApiPlayground {
   enabled: boolean;
   baseUrl?: string;
   auth: ApiPlaygroundAuth;
   apiKeyName?: string;
   apiKeyLocation: ApiPlaygroundApiKeyLocation;
+  environments?: ApiPlaygroundEnvironment[];
 }
 
 export interface ApiRequestBody {
@@ -53,16 +64,29 @@ export interface ApiRequestBody {
   mediaTypes: string[];
   schemaRefs: string[];
   fields?: ApiSchemaField[];
+  examples?: ApiExample[];
 }
 
-export interface ApiSchemaField {
-  name: string;
-  required: boolean;
+export interface ApiSchemaSummary {
   description?: string;
   schemaRef?: string;
   schemaType?: string;
   schemaFormat?: string;
   enumValues?: string[];
+  nullable?: boolean;
+  deprecated?: boolean;
+  defaultValue?: string;
+  exampleValue?: string;
+  fields?: ApiSchemaField[];
+  items?: ApiSchemaSummary;
+  oneOf?: ApiSchemaSummary[];
+  anyOf?: ApiSchemaSummary[];
+  allOf?: ApiSchemaSummary[];
+}
+
+export interface ApiSchemaField extends ApiSchemaSummary {
+  name: string;
+  required: boolean;
 }
 
 export interface ApiResponse {
@@ -70,11 +94,20 @@ export interface ApiResponse {
   description: string;
   mediaTypes: string[];
   schemaRefs: string[];
+  fields?: ApiSchemaField[];
+  examples?: ApiExample[];
 }
 
 export interface ApiCodeSample {
   lang: string;
   source: string;
+}
+
+export interface ApiExample {
+  name?: string;
+  summary?: string;
+  description?: string;
+  value: string;
 }
 
 export interface ApiOperation {
@@ -94,5 +127,7 @@ export interface ApiOperation {
   requestBody?: ApiRequestBody;
   responses: ApiResponse[];
   codeSamples: ApiCodeSample[];
+  serverUrl?: string;
+  serverUrls?: ApiServerUrl[];
   playground?: ApiPlayground;
 }

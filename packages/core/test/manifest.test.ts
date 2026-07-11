@@ -41,7 +41,8 @@ components:
 
     const config: DocumenteeConfig = {
       site: { name: "Acme", description: "" },
-      content: { directory: "docs" },
+      content: { directory: "docs", exclude: [] },
+      versions: [],
       navigation: [],
       openapi: {
         specs: [
@@ -61,11 +62,19 @@ components:
       redirects: [],
       search: { provider: "none" },
       theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
     };
 
     const manifest = await buildManifest(root, config);
+    const schemaRoute = manifest.routes.find((route) => route.route === "/schemas/core/Huge");
 
     expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/api-reference", "/api-reference/list-messages", "/schemas/core/Huge"]);
+    expect(schemaRoute?.schema).toMatchObject({
+      name: "Huge",
+      specId: "core",
+      schemaType: "object",
+      fields: [{ name: "nested", required: false, schemaType: "string" }],
+    });
     expect(JSON.stringify(manifest.routes)).not.toContain("properties");
   });
 
@@ -128,10 +137,10 @@ components:
 
     const config: DocumenteeConfig = {
       site: { name: "Acme", description: "" },
-      content: { directory: "docs" },
+      content: { directory: "docs", exclude: [] },
       versions: [
-        { id: "v1", label: "Version 1", routePrefix: "/v1", content: { directory: "docs/v1" }, default: false },
-        { id: "v2", label: "Version 2", routePrefix: "/v2", content: { directory: "docs/v2" }, default: true },
+        { id: "v1", label: "Version 1", routePrefix: "/v1", content: { directory: "docs/v1", exclude: [] }, default: false, latest: false, deprecated: true },
+        { id: "v2", label: "Version 2", routePrefix: "/v2", content: { directory: "docs/v2", exclude: [] }, default: true, latest: true, deprecated: false },
       ],
       navigation: [],
       openapi: {
@@ -162,6 +171,7 @@ components:
       redirects: [],
       search: { provider: "none" },
       theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
     };
 
     const manifest = await buildManifest(root, config);
@@ -178,20 +188,22 @@ components:
       "/v2/api-reference/admin/list-users",
     ]);
     expect(manifest.routes.find((route) => route.route === "/v1")?.version?.id).toBe("v1");
+    expect(manifest.routes.find((route) => route.route === "/v2")?.canonicalRoute).toBe("/");
     expect(manifest.routes.find((route) => route.route === "/v2/api-reference/admin/list-users")?.version?.id).toBe("v2");
+    expect(manifest.routes.find((route) => route.route === "/v2/api-reference/admin/list-users")?.canonicalRoute).toBe("/api-reference/admin/list-users");
     expect(portal?.kind).toBe("api-portal");
     expect(portal?.apiPortal?.specs).toEqual([
       {
         id: "core-v1",
         name: "Core API v1",
-        version: { id: "v1", label: "Version 1", routePrefix: "/v1", default: false },
+        version: { id: "v1", label: "Version 1", routePrefix: "/v1", default: false, latest: false, deprecated: true },
         operationCount: 1,
         firstOperationRoute: "/v1/api-reference/core/list-messages",
       },
       {
         id: "admin-v2",
         name: "Admin API v2",
-        version: { id: "v2", label: "Version 2", routePrefix: "/v2", default: true },
+        version: { id: "v2", label: "Version 2", routePrefix: "/v2", default: true, latest: true, deprecated: false },
         operationCount: 1,
         firstOperationRoute: "/v2/api-reference/admin/list-users",
       },
@@ -205,7 +217,8 @@ components:
 
     const config: DocumenteeConfig = {
       site: { name: "Acme", description: "" },
-      content: { directory: "docs" },
+      content: { directory: "docs", exclude: [] },
+      versions: [],
       navigation: [],
       openapi: { specs: [] },
       seo: {
@@ -216,6 +229,7 @@ components:
       redirects: [],
       search: { provider: "pagefind" },
       theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
     };
 
     const manifest = await buildManifest(root, config);
@@ -223,5 +237,118 @@ components:
 
     expect(searchRoute?.title).toBe("Search");
     expect(searchRoute?.description).toBe("Search Acme documentation.");
+  });
+
+  it("builds locale-prefixed non-default locale routes with locale metadata", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-manifest-i18n-"));
+    await mkdir(join(root, "docs", "fr"), { recursive: true });
+    await mkdir(join(root, "docs", "ar"), { recursive: true });
+    await writeFile(join(root, "docs", "index.mdx"), "---\ntitle: Home\n---\n# Home\n");
+    await writeFile(join(root, "docs", "guide.mdx"), "---\ntitle: Guide\n---\n# Guide\n");
+    await writeFile(join(root, "docs", "fr", "index.mdx"), "---\ntitle: Accueil\n---\n# Accueil\n");
+    await writeFile(join(root, "docs", "fr", "guide.mdx"), "---\ntitle: Guide FR\n---\n# Guide FR\n");
+    await writeFile(join(root, "docs", "ar", "index.mdx"), "---\ntitle: الرئيسية\n---\n# الرئيسية\n");
+
+    const config: DocumenteeConfig = {
+      site: { name: "Acme", description: "" },
+      content: { directory: "docs", exclude: [] },
+      i18n: {
+        defaultLocale: "en",
+        prefixDefaultLocale: false,
+        locales: [
+          { code: "en", label: "English", dir: "ltr" },
+          { code: "fr", label: "Français", dir: "ltr" },
+          { code: "ar", label: "العربية", dir: "rtl" },
+        ],
+      },
+      versions: [],
+      navigation: [],
+      openapi: { specs: [] },
+      seo: {
+        sitemap: true,
+        robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        twitterCard: "summary_large_image",
+      },
+      redirects: [],
+      search: { provider: "none" },
+      theme: { darkMode: true },
+      layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+    };
+
+    const manifest = await buildManifest(root, config);
+
+    expect(manifest.locales).toEqual([
+      { code: "en", label: "English", dir: "ltr", default: true, routePrefix: "/" },
+      { code: "fr", label: "Français", dir: "ltr", default: false, routePrefix: "/fr" },
+      { code: "ar", label: "العربية", dir: "rtl", default: false, routePrefix: "/ar" },
+    ]);
+    expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/ar", "/fr", "/fr/guide", "/guide"]);
+    expect(manifest.routes.find((route) => route.route === "/")?.locale?.code).toBe("en");
+    expect(manifest.routes.find((route) => route.route === "/ar")?.locale).toMatchObject({ code: "ar", dir: "rtl" });
+    expect(manifest.routes.find((route) => route.route === "/fr/guide")?.sourceRelativePath).toBe("guide.mdx");
+  });
+
+  it("omits excluded content from manifest routes while keeping generated search", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-manifest-exclude-"));
+    await mkdir(join(root, "docs", "public"), { recursive: true });
+    await mkdir(join(root, "docs", "superpowers"), { recursive: true });
+    await writeFile(join(root, "docs", "index.mdx"), "---\ntitle: Home\n---\n# Home\n");
+    await writeFile(join(root, "docs", "public", "page.mdx"), "---\ntitle: Public\n---\n# Public\n");
+    await writeFile(join(root, "docs", "superpowers", "private.mdx"), "---\ntitle: Private\n---\n# Private\n");
+
+    const config: DocumenteeConfig = {
+      site: { name: "Acme", description: "" },
+      content: { directory: "docs", exclude: ["superpowers/**"] },
+      versions: [],
+      navigation: [],
+      openapi: { specs: [] },
+      seo: {
+        sitemap: true,
+        robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        twitterCard: "summary_large_image",
+      },
+      redirects: [],
+      search: { provider: "pagefind" },
+      theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+    };
+
+    const manifest = await buildManifest(root, config);
+
+    expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/public/page", "/search"]);
+    expect(JSON.stringify(manifest.routes)).not.toContain("Private");
+  });
+
+  it("omits excluded version content from versioned routes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-manifest-version-exclude-"));
+    await mkdir(join(root, "docs", "v1", "public"), { recursive: true });
+    await mkdir(join(root, "docs", "v1", "internal"), { recursive: true });
+    await writeFile(join(root, "docs", "index.mdx"), "---\ntitle: Home\n---\n# Home\n");
+    await writeFile(join(root, "docs", "v1", "public", "page.mdx"), "---\ntitle: Public V1\n---\n# Public V1\n");
+    await writeFile(join(root, "docs", "v1", "internal", "private.mdx"), "---\ntitle: Private V1\n---\n# Private V1\n");
+
+    const config: DocumenteeConfig = {
+      site: { name: "Acme", description: "" },
+      content: { directory: "docs", exclude: [] },
+      versions: [
+        { id: "v1", label: "Version 1", routePrefix: "/v1", content: { directory: "docs/v1", exclude: ["internal/**"] }, default: false, latest: false, deprecated: false },
+      ],
+      navigation: [],
+      openapi: { specs: [] },
+      seo: {
+        sitemap: true,
+        robots: { enabled: true, rules: [{ userAgent: "*", allow: "/" }] },
+        twitterCard: "summary_large_image",
+      },
+      redirects: [],
+      search: { provider: "none" },
+      theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+    };
+
+    const manifest = await buildManifest(root, config);
+
+    expect(manifest.routes.map((route) => route.route)).toEqual(["/", "/v1/public/page"]);
+    expect(JSON.stringify(manifest.routes)).not.toContain("Private V1");
   });
 });

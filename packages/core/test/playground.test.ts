@@ -17,7 +17,13 @@ describe("renderPlaygroundScript", () => {
     expect(script).toContain('result.dataset.state = "error"');
     expect(script).toContain("response.status");
     expect(script).toContain("response.headers.forEach");
-    expect(script).toContain("Network or CORS error");
+    expect(script).toContain("data-playground-preview");
+    expect(script).toContain("data-playground-response-headers");
+    expect(script).toContain("data-playground-response-body");
+    expect(script).toContain("renderPreview");
+    expect(script).toContain("environment");
+    expect(script).toContain("Request preview updates as you edit");
+    expect(script).toContain("Network, CORS, or authentication error");
     expect(script).not.toContain("localStorage");
     expect(script).not.toContain("sessionStorage");
   });

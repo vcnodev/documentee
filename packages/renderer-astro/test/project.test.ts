@@ -11,7 +11,8 @@ describe("writeAstroProject", () => {
     const manifest: SiteManifest = {
       config: {
         site: { name: "Acme", description: "Docs" },
-        content: { directory: "docs" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
         navigation: [],
         openapi: { specs: [] },
         seo: {
@@ -22,6 +23,7 @@ describe("writeAstroProject", () => {
         redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: [],
       operations: [],

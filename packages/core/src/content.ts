@@ -1,16 +1,19 @@
-import { readFile } from "node:fs/promises";
-import { relative, resolve } from "node:path";
+import { readFile, stat } from "node:fs/promises";
+import { isAbsolute, relative, resolve } from "node:path";
 import fg from "fast-glob";
 import matter from "gray-matter";
 import { marked } from "marked";
-import type { DocumenteeConfig } from "./config.js";
+import type { DocumenteeContentConfigInput } from "./config.js";
 import { renderMdxComponents } from "./mdx-components.js";
 
 export interface ContentPage {
   sourcePath: string;
+  sourceRelativePath: string;
+  sourceProjectPath?: string;
   route: string;
   title: string;
   description: string;
+  lastUpdated: string;
   seo: PageSeo;
   markdown: string;
   html: string;
@@ -26,31 +29,38 @@ export interface PageSeo {
 
 export async function loadContentPages(
   projectRoot: string,
-  content: DocumenteeConfig["content"],
+  content: DocumenteeContentConfigInput,
 ): Promise<ContentPage[]> {
   const contentRoot = resolve(projectRoot, content.directory);
   const files = await fg(["**/*.md", "**/*.mdx"], {
     cwd: contentRoot,
     absolute: true,
+    ignore: content.exclude ?? [],
     onlyFiles: true,
   });
 
-  const pages = await Promise.all(files.map((filePath) => loadPage(contentRoot, filePath)));
+  const pages = await Promise.all(files.map((filePath) => loadPage(projectRoot, contentRoot, filePath)));
   return pages.sort((a, b) => a.route.localeCompare(b.route));
 }
 
-async function loadPage(contentRoot: string, filePath: string): Promise<ContentPage> {
+async function loadPage(projectRoot: string, contentRoot: string, filePath: string): Promise<ContentPage> {
   const raw = await readFile(filePath, "utf8");
+  const fileStat = await stat(filePath);
   const parsed = matter(raw);
   const markdown = renderMdxComponents(parsed.content.trim());
   const html = await marked.parse(markdown, { async: true });
+  const sourceRelativePath = relative(contentRoot, filePath).split(/[\\/]/g).join("/");
+  const sourceProjectPath = projectRelativePath(projectRoot, filePath);
   const route = routeFromFile(contentRoot, filePath);
 
   return {
     sourcePath: filePath,
+    sourceRelativePath,
+    sourceProjectPath,
     route,
     title: stringValue(parsed.data.title) ?? titleFromRoute(route),
     description: stringValue(parsed.data.description) ?? "",
+    lastUpdated: fileStat.mtime.toISOString(),
     seo: {
       canonical: stringValue(parsed.data.canonical),
       robots: stringValue(parsed.data.robots),
@@ -61,6 +71,12 @@ async function loadPage(contentRoot: string, filePath: string): Promise<ContentP
     markdown,
     html,
   };
+}
+
+function projectRelativePath(projectRoot: string, filePath: string): string | undefined {
+  const normalized = relative(resolve(projectRoot), filePath).split(/[\\/]/g).join("/");
+  if (normalized === ".." || normalized.startsWith("../") || isAbsolute(normalized)) return undefined;
+  return normalized;
 }
 
 function routeFromFile(contentRoot: string, filePath: string): string {

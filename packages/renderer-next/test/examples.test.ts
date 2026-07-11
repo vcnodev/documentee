@@ -11,7 +11,8 @@ describe("writeNextExamples", () => {
     const manifest: SiteManifest = {
       config: {
         site: { name: "Acme", description: "" },
-        content: { directory: "docs" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
         navigation: [],
         openapi: { specs: [] },
         seo: {
@@ -22,6 +23,7 @@ describe("writeNextExamples", () => {
         redirects: [],
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: [],
       operations: [],

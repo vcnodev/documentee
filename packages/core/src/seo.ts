@@ -23,7 +23,7 @@ export function renderSeoHead(manifest: SiteManifest, route: SiteRoute): string 
   const seoConfig = getSeoConfig(manifest.config);
   const title = renderTitle(manifest, route.title);
   const description = route.description || manifest.config.site.description;
-  const canonical = route.seo?.canonical ?? absoluteUrl(manifest.config.site.url, route.route);
+  const canonical = route.seo?.canonical ?? absoluteUrl(manifest.config.site.url, route.canonicalRoute ?? route.route);
   const socialTitle = route.seo?.socialTitle ?? route.title;
   const socialDescription = route.seo?.socialDescription ?? description;
   const image = route.seo?.image ?? seoConfig.image;

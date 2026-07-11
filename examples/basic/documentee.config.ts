@@ -13,8 +13,18 @@ export default {
       label: "Version 1",
       routePrefix: "/v1",
       content: { directory: "docs/v1" },
+      latest: true,
+      default: true,
     },
   ],
+  i18n: {
+    defaultLocale: "en",
+    locales: [
+      { code: "en", label: "English" },
+      { code: "fr", label: "Français" },
+      { code: "ar", label: "العربية", dir: "rtl" },
+    ],
+  },
   navigation: [
     { group: "Get Started", pages: ["docs/index", "docs/get-started/quickstart", "docs/components"] },
     { group: "Versions", pages: ["/v1"] },
@@ -33,6 +43,10 @@ export default {
           enabled: true,
           baseUrl: "https://api.acme.test",
           auth: "bearer",
+          environments: [
+            { name: "Production", baseUrl: "https://api.acme.test" },
+            { name: "Sandbox", baseUrl: "https://sandbox.acme.test" },
+          ],
         },
       },
       {

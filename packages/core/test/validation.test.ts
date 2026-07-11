@@ -16,6 +16,7 @@ describe("validateManifest", () => {
         openapi: { specs: [] },
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: {
         "docs/index.mdx": "---\ntitle: Home\n---\n# Home\n[Missing](/missing-page)\n",
@@ -39,6 +40,7 @@ describe("validateManifest", () => {
         openapi: { specs: [{ id: "core", source: "./api/openapi.yaml", routeBase: "/api-reference" }] },
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: {},
       openapi: `openapi: 3.1.0
@@ -78,6 +80,7 @@ paths:
         redirects: [{ from: "/old", to: "/", status: 301 }],
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: {
         "docs/old.mdx": "---\ntitle: Old\n---\n# Old\n",
@@ -100,6 +103,7 @@ paths:
         openapi: { specs: [] },
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: {
         "docs/index.mdx": "---\ntitle: Home\n---\n# Home\n",
@@ -123,6 +127,7 @@ paths:
         openapi: { specs: [{ id: "core", source: "./api/openapi.yaml", routeBase: "/api-reference", version: "v3" }] },
         search: { provider: "none" },
         theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
       },
       pages: {
         "docs/index.mdx": "---\ntitle: Home\n---\n# Home\n",
@@ -147,6 +152,36 @@ paths:
     const diagnostics = validateManifest(manifest);
 
     expect(diagnostics).toContain("OpenAPI spec core references missing version: v3");
+  });
+
+  it("reports missing default locale content when i18n is configured", async () => {
+    const root = await createProject({
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs" },
+        i18n: {
+          defaultLocale: "en",
+          locales: [
+            { code: "en", label: "English" },
+            { code: "fr", label: "Français" },
+          ],
+        },
+        navigation: [],
+        openapi: { specs: [] },
+        search: { provider: "none" },
+        theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: {
+        "docs/fr/index.mdx": "---\ntitle: Accueil\n---\n# Accueil\n",
+      },
+    });
+
+    const config = await loadConfig(root);
+    const manifest = await buildManifest(root, config);
+    const diagnostics = validateManifest(manifest);
+
+    expect(diagnostics).toContain("Missing default locale content for i18n.defaultLocale: en");
   });
 });
 

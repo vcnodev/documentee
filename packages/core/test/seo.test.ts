@@ -29,7 +29,8 @@ describe("SEO helpers", () => {
   const manifest: SiteManifest = {
     config: {
       site: { name: "Acme Docs", url: "https://docs.acme.test", description: "Docs for Acme" },
-      content: { directory: "docs" },
+      content: { directory: "docs", exclude: [] },
+      versions: [],
       navigation: [],
       openapi: { specs: [] },
       seo: {
@@ -45,6 +46,7 @@ describe("SEO helpers", () => {
       redirects: [{ from: "/old", to: "/get-started/quickstart", status: 301 }],
       search: { provider: "none" },
       theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
     },
     pages: [],
     operations: [],
@@ -66,6 +68,57 @@ describe("SEO helpers", () => {
 
   it("renders sitemap XML from manifest routes", () => {
     expect(renderSitemapXml(manifest)).toContain("<loc>https://docs.acme.test/get-started/quickstart/</loc>");
+  });
+
+  it("uses the canonical route for latest-version pages", () => {
+    const latestRoute: SiteRoute = {
+      ...route,
+      route: "/v2/get-started/quickstart",
+      canonicalRoute: "/get-started/quickstart",
+      seo: undefined,
+      version: { id: "v2", label: "Version 2", routePrefix: "/v2", default: true, latest: true, deprecated: false },
+    };
+
+    const head = renderSeoHead({ ...manifest, routes: [latestRoute] }, latestRoute);
+
+    expect(head).toContain('<link rel="canonical" href="https://docs.acme.test/get-started/quickstart/">');
+    expect(head).toContain('<meta property="og:url" content="https://docs.acme.test/get-started/quickstart/">');
+  });
+
+  it("renders sitemap XML only from filtered manifest routes", () => {
+    const sitemap = renderSitemapXml({
+      ...manifest,
+      pages: [
+        {
+          sourcePath: "/repo/docs/superpowers/private.mdx",
+          sourceRelativePath: "superpowers/private.mdx",
+          sourceProjectPath: "docs/superpowers/private.mdx",
+          route: "/superpowers/private",
+          title: "Private",
+          description: "Internal planning page.",
+          seo: {},
+          lastUpdated: "2026-07-05T10:20:30.000Z",
+          markdown: "# Private\n\nDo not publish.",
+          html: "<h1>Private</h1>",
+        },
+      ],
+      routes: [
+        route,
+        {
+          kind: "search",
+          route: "/search",
+          title: "Search",
+          description: "Search Acme documentation.",
+          html: "",
+          markdown: "",
+        },
+      ],
+    });
+
+    expect(sitemap).toContain("<loc>https://docs.acme.test/get-started/quickstart/</loc>");
+    expect(sitemap).toContain("<loc>https://docs.acme.test/search/</loc>");
+    expect(sitemap).not.toContain("superpowers");
+    expect(sitemap).not.toContain("private");
   });
 
   it("renders robots text with sitemap URL", () => {

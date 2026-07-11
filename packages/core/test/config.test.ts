@@ -2,9 +2,20 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadConfig } from "../src/config.js";
+import { defineConfig, loadConfig } from "../src/config.js";
 
 describe("loadConfig", () => {
+  it("accepts authored config with schema-defaulted fields omitted", () => {
+    const config = defineConfig({
+      site: { name: "Acme Docs" },
+      content: { directory: "docs" },
+      versions: [{ id: "v1", content: { directory: "docs/v1" } }],
+    });
+
+    expect(config.site.name).toBe("Acme Docs");
+    expect(config.content.directory).toBe("docs");
+  });
+
   it("loads docs.json and normalizes defaults", async () => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(
@@ -20,6 +31,7 @@ describe("loadConfig", () => {
 
     expect(config.site.name).toBe("Acme Docs");
     expect(config.content.directory).toBe("docs");
+    expect(config.content.exclude).toEqual([]);
     expect(config.openapi.specs[0].id).toBe("core");
     expect(config.openapi.specs[0].playground).toEqual({
       enabled: false,
@@ -36,6 +48,251 @@ describe("loadConfig", () => {
     });
     expect(config.redirects).toEqual([]);
     expect(config.search.provider).toBe("none");
+    expect(config.layout).toEqual({
+      nav: "sidebar",
+      toc: "right",
+      footer: true,
+      breadcrumbs: true,
+    });
+  });
+
+  it("loads docs.json layout settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        layout: {
+          nav: "hybrid",
+          toc: "inline",
+          footer: false,
+          breadcrumbs: false,
+          editUrl: "https://github.com/acme/docs/edit/main",
+          announcement: "v1.0 is available",
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.layout).toEqual({
+      nav: "hybrid",
+      toc: "inline",
+      footer: false,
+      breadcrumbs: false,
+      editUrl: "https://github.com/acme/docs/edit/main",
+      announcement: "v1.0 is available",
+    });
+  });
+
+  it("loads opt-in assistant settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        assistant: {
+          enabled: true,
+          endpoint: "/api/docs-assistant",
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.assistant).toEqual({
+      enabled: true,
+      endpoint: "/api/docs-assistant",
+    });
+  });
+
+  it("loads opt-in feedback settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        feedback: {
+          enabled: true,
+          endpoint: "https://example.com/docs-feedback",
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.feedback).toEqual({
+      enabled: true,
+      endpoint: "https://example.com/docs-feedback",
+    });
+  });
+
+  it("loads custom analytics settings", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        analytics: {
+          provider: "custom",
+          scriptSrc: "https://analytics.example.com/script.js",
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.analytics).toEqual({
+      provider: "custom",
+      scriptSrc: "https://analytics.example.com/script.js",
+    });
+  });
+
+  it("loads i18n locales with defaults", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        i18n: {
+          defaultLocale: "en",
+          locales: [
+            { code: "en", label: "English" },
+            { code: "fr", label: "Français" },
+            { code: "ar", label: "العربية", dir: "rtl" },
+          ],
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.i18n).toEqual({
+      defaultLocale: "en",
+      prefixDefaultLocale: false,
+      locales: [
+        { code: "en", label: "English", dir: "ltr" },
+        { code: "fr", label: "Français", dir: "ltr" },
+        { code: "ar", label: "العربية", dir: "rtl" },
+      ],
+    });
+  });
+
+  it("rejects i18n configs when the default locale is missing from locales", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        i18n: {
+          defaultLocale: "en",
+          locales: [{ code: "fr", label: "Français" }],
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/defaultLocale|locales|i18n/i);
+  });
+
+  it("rejects unsafe assistant endpoints", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        assistant: {
+          enabled: true,
+          endpoint: "javascript:alert(1)",
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/assistant|endpoint|http|path/i);
+  });
+
+  it("rejects unsafe feedback endpoints", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        feedback: {
+          enabled: true,
+          endpoint: "javascript:alert(1)",
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/feedback|endpoint|http|path/i);
+  });
+
+  it("rejects unsafe analytics script URLs", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        analytics: {
+          provider: "custom",
+          scriptSrc: "javascript:alert(1)",
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/analytics|scriptSrc|http|path/i);
+  });
+
+  it("rejects unsupported docs.json layout nav values", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        layout: { nav: "rail" },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/sidebar|topbar|hybrid|Invalid enum value/);
+  });
+
+  it("rejects unsupported docs.json layout toc values", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        layout: { toc: "floating" },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/right|inline|hidden|Invalid enum value/);
+  });
+
+  it("rejects non-http layout edit URLs", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        layout: { editUrl: "javascript:alert(1)" },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow(/http|https|editUrl/i);
+  });
+
+  it("rejects malformed layout edit URLs as config validation errors", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        layout: { editUrl: "not a url" },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toMatchObject({ name: "ZodError" });
+    await expect(loadConfig(root)).rejects.toThrow(/editUrl|url/i);
   });
 
   it("loads SEO and redirect settings", async () => {
@@ -93,6 +350,10 @@ describe("loadConfig", () => {
                 auth: "apiKey",
                 apiKeyName: "x-api-key",
                 apiKeyLocation: "header",
+                environments: [
+                  { name: "Production", baseUrl: "https://api.acme.test" },
+                  { name: "Sandbox", baseUrl: "https://sandbox.acme.test" },
+                ],
               },
             },
           ],
@@ -108,6 +369,10 @@ describe("loadConfig", () => {
       auth: "apiKey",
       apiKeyName: "x-api-key",
       apiKeyLocation: "header",
+      environments: [
+        { name: "Production", baseUrl: "https://api.acme.test" },
+        { name: "Sandbox", baseUrl: "https://sandbox.acme.test" },
+      ],
     });
   });
 
@@ -154,21 +419,32 @@ describe("loadConfig", () => {
     });
   });
 
-  it("loads named theme presets", async () => {
+  it.each([
+    "neutral",
+    "mint",
+    "slate",
+    "highContrast",
+    "classic",
+    "terminal",
+    "startup",
+    "enterprise",
+    "api",
+    "minimal",
+  ])("loads %s theme preset", async (preset) => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(
       join(root, "docs.json"),
       JSON.stringify({
         name: "Acme Docs",
         theme: {
-          preset: "mint",
+          preset,
         },
       }),
     );
 
     const config = await loadConfig(root);
 
-    expect(config.theme.preset).toBe("mint");
+    expect(config.theme.preset).toBe(preset);
   });
 
   it("rejects unknown theme presets", async () => {
@@ -209,8 +485,9 @@ describe("loadConfig", () => {
       JSON.stringify({
         name: "Acme Docs",
         versions: [
-          { id: "v1", content: { directory: "docs/v1" } },
-          { id: "v2", label: "Version 2", routePrefix: "/v2", content: { directory: "docs/v2" }, default: true },
+          { id: "v1", content: { directory: "docs/v1", exclude: ["internal/**"] } },
+          { id: "v2", label: "Version 2", routePrefix: "/v2", content: { directory: "docs/v2" }, default: true, latest: true },
+          { id: "v0", label: "Legacy", routePrefix: "/legacy", content: { directory: "docs/v0" }, deprecated: true },
         ],
         openapi: {
           specs: [{ id: "core-v2", source: "./api/core-v2.yaml", version: "v2" }],
@@ -225,15 +502,28 @@ describe("loadConfig", () => {
         id: "v1",
         label: "v1",
         routePrefix: "/v1",
-        content: { directory: "docs/v1" },
+        content: { directory: "docs/v1", exclude: ["internal/**"] },
         default: false,
+        latest: false,
+        deprecated: false,
       },
       {
         id: "v2",
         label: "Version 2",
         routePrefix: "/v2",
-        content: { directory: "docs/v2" },
+        content: { directory: "docs/v2", exclude: [] },
         default: true,
+        latest: true,
+        deprecated: false,
+      },
+      {
+        id: "v0",
+        label: "Legacy",
+        routePrefix: "/legacy",
+        content: { directory: "docs/v0", exclude: [] },
+        default: false,
+        latest: false,
+        deprecated: true,
       },
     ]);
     expect(config.openapi.specs[0].version).toBe("v2");
@@ -303,5 +593,60 @@ describe("loadConfig", () => {
     );
 
     await expect(loadConfig(root)).rejects.toThrow("Only one version can be marked as default");
+  });
+
+  it("rejects multiple latest versions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        versions: [
+          { id: "v1", content: { directory: "docs/v1" }, latest: true },
+          { id: "v2", content: { directory: "docs/v2" }, latest: true },
+        ],
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Only one version can be marked as latest");
+  });
+
+  it("loads optional TypeScript plugins", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "documentee.config.ts"),
+      `
+        export default {
+          site: { name: "Acme Docs" },
+          plugins: [
+            {
+              name: "html-marker",
+              transformHtml(html) {
+                return html;
+              }
+            }
+          ]
+        };
+      `,
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.plugins?.[0]?.name).toBe("html-marker");
+  });
+
+  it("rejects plugins without a name", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "documentee.config.ts"),
+      `
+        export default {
+          site: { name: "Acme Docs" },
+          plugins: [{ transformHtml(html) { return html; } }]
+        };
+      `,
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("plugins entries must include a name");
   });
 });

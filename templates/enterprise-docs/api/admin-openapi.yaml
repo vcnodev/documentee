@@ -1,0 +1,16 @@
+openapi: 3.1.0
+info:
+  title: Atlas Admin API
+  version: 1.0.0
+servers:
+  - url: https://api.atlas.test/admin
+paths:
+  /audit-events:
+    get:
+      operationId: listAuditEvents
+      summary: List audit events
+      tags:
+        - Audit
+      responses:
+        "200":
+          description: Audit events

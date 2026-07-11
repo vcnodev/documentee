@@ -1,12 +1,23 @@
 import type { SiteManifest } from "./manifest.js";
+import { validatePlugins } from "./plugins.js";
 
-export function validateManifest(manifest: SiteManifest): string[] {
+export type ValidationIssue = string;
+
+export function validateManifest(manifest: SiteManifest): ValidationIssue[] {
   return [
     ...validateDuplicateRoutes(manifest),
     ...validateNavigationTargets(manifest),
     ...validateOpenApiVersions(manifest),
+    ...validateI18nContent(manifest),
     ...validateInternalLinks(manifest),
     ...validateRedirects(manifest),
+  ];
+}
+
+export async function validateManifestWithPlugins(manifest: SiteManifest): Promise<ValidationIssue[]> {
+  return [
+    ...validateManifest(manifest),
+    ...await validatePlugins(manifest),
   ];
 }
 
@@ -47,6 +58,18 @@ function validateOpenApiVersions(manifest: SiteManifest): string[] {
   return manifest.config.openapi.specs
     .filter((spec) => spec.version && !versionIds.has(spec.version))
     .map((spec) => `OpenAPI spec ${spec.id} references missing version: ${spec.version}`);
+}
+
+function validateI18nContent(manifest: SiteManifest): string[] {
+  const i18n = manifest.config.i18n;
+  if (!i18n) return [];
+
+  const hasDefaultLocalePage = manifest.routes.some((route) =>
+    route.kind === "page" &&
+    route.locale?.code === i18n.defaultLocale
+  );
+
+  return hasDefaultLocalePage ? [] : [`Missing default locale content for i18n.defaultLocale: ${i18n.defaultLocale}`];
 }
 
 function validateInternalLinks(manifest: SiteManifest): string[] {
