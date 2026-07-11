@@ -20,6 +20,14 @@ Documentee supports a practical set of MDX-style components by transforming them
 - `Frame`
 - `Icon`
 - `Badge`
+- `PackageInstall`
+- `CliCommand`
+- `Mermaid`
+- `Update` and `Changelog`
+- `Columns` and `Column`
+- `FeatureGrid` and `Feature`
+- `EndpointCard`
+- `OpenApiOperation`
 
 ## Migration Compatibility
 
@@ -39,6 +47,23 @@ Documentee also recognizes common framework components:
 ```
 
 `CardGroup` honors explicit column counts on desktop and collapses to one column on narrow screens. Decorative card icons are hidden from assistive technology while the card title and description remain readable.
+
+```mdx
+<PackageInstall package="documentee" managers="pnpm,npm,yarn" />
+
+<CliCommand command="documentee build . --out dist" />
+
+<FeatureGrid>
+  <Feature title="Static output" icon="check">No hydration required.</Feature>
+  <Feature title="Agent-ready" icon="code">LLM files ship with builds.</Feature>
+</FeatureGrid>
+
+<EndpointCard method="POST" path="/messages" href="/api-reference/core/create-message">
+Create a message.
+</EndpointCard>
+```
+
+`Mermaid` renders a static code block with `language-mermaid` so teams can bring their own diagram enhancement later without Documentee shipping client JavaScript by default.
 
 ## Generated Page UI
 

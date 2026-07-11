@@ -1,0 +1,27 @@
+---
+title: Static API Docs
+description: How Documentee turns OpenAPI and Markdown into deployable static API documentation.
+---
+
+# Static API Docs
+
+Documentee builds API documentation as static files from a shared manifest. Guides, generated API operation pages, schema pages, SEO files, search output, and AI-readable files all come from the same content graph.
+
+## What this unlocks
+
+- Deploy API docs to any static host or CDN.
+- Keep docs builds deterministic in CI.
+- Generate operation pages, schema references, multi-spec portals, and API playground UI only when configured.
+- Audit docs before launch for broken links, metadata gaps, missing examples, private content exposure, and oversized pages.
+
+## Recommended workflow
+
+1. Keep OpenAPI specs in `api/`.
+2. Keep guides in `docs/`.
+3. Run `documentee validate` on every pull request.
+4. Run `documentee audit . --format json` before release.
+5. Build static output with `documentee build . --out dist-docs`.
+
+## Static-first policy
+
+Documentee does not add client JavaScript for ordinary docs pages. Scripts appear only for explicitly configured features such as search UI, API playgrounds, feedback, analytics, assistant forms, copy buttons, or generated navigation helpers.

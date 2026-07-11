@@ -2,6 +2,8 @@ import { readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { z } from "zod";
+import type { DocumenteePlugin } from "./plugins.js";
+import { isDocumenteePlugin } from "./plugins.js";
 
 const navigationPageSchema = z.object({
   group: z.string(),
@@ -9,21 +11,37 @@ const navigationPageSchema = z.object({
   openapi: z.string().optional(),
 });
 
+const contentSchema = z.object({
+  directory: z.string().min(1),
+  exclude: z.array(z.string().min(1)).default([]),
+});
+
+const rootContentSchema = contentSchema.extend({
+  directory: z.string().min(1).default("docs"),
+}).default({ directory: "docs", exclude: [] });
+
 const versionSchema = z.object({
   id: z.string().min(1),
   label: z.string().optional(),
   routePrefix: z.string().min(1).optional(),
-  content: z.object({
-    directory: z.string().min(1),
-  }),
+  content: contentSchema,
   default: z.boolean().default(false),
+  latest: z.boolean().default(false),
+  deprecated: z.boolean().default(false),
 }).transform((version) => ({
   id: version.id,
   label: version.label ?? version.id,
   routePrefix: normalizeRoutePrefix(version.routePrefix ?? `/${version.id}`),
   content: version.content,
   default: version.default,
+  latest: version.latest,
+  deprecated: version.deprecated,
 }));
+
+const playgroundEnvironmentSchema = z.object({
+  name: z.string().min(1),
+  baseUrl: z.string().url(),
+});
 
 const playgroundSchema = z.object({
   enabled: z.boolean().default(false),
@@ -31,6 +49,7 @@ const playgroundSchema = z.object({
   auth: z.enum(["none", "bearer", "apiKey"]).default("none"),
   apiKeyName: z.string().min(1).optional(),
   apiKeyLocation: z.enum(["header", "query"]).default("header"),
+  environments: z.array(playgroundEnvironmentSchema).optional(),
 }).default({
   enabled: false,
   auth: "none",
@@ -80,7 +99,18 @@ const redirectSchema = z.object({
 });
 
 const themeSchema = z.object({
-  preset: z.enum(["mint", "slate", "neutral", "highContrast"]).optional(),
+  preset: z.enum([
+    "neutral",
+    "mint",
+    "slate",
+    "highContrast",
+    "classic",
+    "terminal",
+    "startup",
+    "enterprise",
+    "api",
+    "minimal",
+  ]).optional(),
   primaryColor: z.string().optional(),
   accentColor: z.string().optional(),
   backgroundColor: z.string().optional(),
@@ -96,6 +126,98 @@ const themeSchema = z.object({
   darkMode: z.boolean().default(true),
 }).default({ darkMode: true });
 
+const layoutSchema = z.object({
+  nav: z.enum(["sidebar", "topbar", "hybrid"]).default("sidebar"),
+  toc: z.enum(["right", "inline", "hidden"]).default("right"),
+  footer: z.boolean().default(true),
+  breadcrumbs: z.boolean().default(true),
+  editUrl: z.string().refine((value) => {
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "layout.editUrl must be a valid http or https URL").optional(),
+  announcement: z.string().optional(),
+}).default({
+  nav: "sidebar",
+  toc: "right",
+  footer: true,
+  breadcrumbs: true,
+});
+
+const localeSchema = z.object({
+  code: z.string().min(1),
+  label: z.string().min(1),
+  dir: z.enum(["ltr", "rtl"]).default("ltr"),
+});
+
+const i18nSchema = z.object({
+  defaultLocale: z.string().min(1),
+  prefixDefaultLocale: z.boolean().default(false),
+  locales: z.array(localeSchema).min(1),
+});
+
+const assistantSchema = z.object({
+  enabled: z.boolean().default(false),
+  endpoint: z.string().refine((value) => {
+    if (value.startsWith("/")) return !value.startsWith("//");
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "assistant.endpoint must be a site path or a valid http or https URL").optional(),
+}).superRefine((assistant, ctx) => {
+  if (assistant.enabled && !assistant.endpoint) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endpoint"],
+      message: "assistant.endpoint is required when assistant.enabled is true",
+    });
+  }
+});
+
+const feedbackSchema = z.object({
+  enabled: z.boolean().default(false),
+  endpoint: z.string().refine((value) => {
+    if (value.startsWith("/")) return !value.startsWith("//");
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "feedback.endpoint must be a site path or a valid http or https URL").optional(),
+}).superRefine((feedback, ctx) => {
+  if (feedback.enabled && !feedback.endpoint) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endpoint"],
+      message: "feedback.endpoint is required when feedback.enabled is true",
+    });
+  }
+});
+
+const analyticsSchema = z.object({
+  provider: z.literal("custom"),
+  scriptSrc: z.string().refine((value) => {
+    if (value.startsWith("/")) return !value.startsWith("//");
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "analytics.scriptSrc must be a site path or a valid http or https URL"),
+});
+
+const pluginSchema = z.custom<DocumenteePlugin>(isDocumenteePlugin, {
+  message: "plugins entries must include a name and supported hook functions",
+});
+
 const configSchema = z.object({
   site: z.object({
     name: z.string().min(1),
@@ -103,9 +225,7 @@ const configSchema = z.object({
     description: z.string().optional().default(""),
     logo: z.string().optional(),
   }),
-  content: z.object({
-    directory: z.string().min(1).default("docs"),
-  }).default({ directory: "docs" }),
+  content: rootContentSchema,
   versions: z.array(versionSchema).default([]),
   navigation: z.array(navigationPageSchema).default([]),
   openapi: z.object({
@@ -116,7 +236,13 @@ const configSchema = z.object({
   search: z.object({
     provider: z.enum(["none", "pagefind"]).default("none"),
   }).default({ provider: "none" }),
+  i18n: i18nSchema.optional(),
+  assistant: assistantSchema.optional(),
+  feedback: feedbackSchema.optional(),
+  analytics: analyticsSchema.optional(),
+  plugins: z.array(pluginSchema).optional(),
   theme: themeSchema,
+  layout: layoutSchema,
 });
 
 const docsJsonSchema = z.object({
@@ -131,21 +257,28 @@ const docsJsonSchema = z.object({
   }).default({ specs: [] }),
   seo: seoSchema.optional(),
   redirects: z.array(redirectSchema).optional(),
+  i18n: i18nSchema.optional(),
+  assistant: assistantSchema.optional(),
+  feedback: feedbackSchema.optional(),
+  analytics: analyticsSchema.optional(),
   theme: themeSchema.optional(),
+  layout: layoutSchema.optional(),
   colors: z.object({
     primary: z.string().optional(),
   }).optional(),
 });
 
-type ParsedDocumenteeConfig = z.infer<typeof configSchema>;
+type ParsedDocumenteeConfig = z.output<typeof configSchema>;
 
-export type DocumenteeConfig = Omit<ParsedDocumenteeConfig, "versions"> & {
-  versions?: ParsedDocumenteeConfig["versions"];
-};
+export type DocumenteeConfigInput = z.input<typeof configSchema>;
+export type DocumenteeConfig = ParsedDocumenteeConfig;
+export type DocumenteeContentConfigInput = z.input<typeof contentSchema>;
+export type NavLayout = z.infer<typeof layoutSchema>["nav"];
+export type TocLayout = z.infer<typeof layoutSchema>["toc"];
 export type NavigationGroup = z.infer<typeof navigationPageSchema>;
 export type OpenApiSpecConfig = z.infer<typeof openApiSpecSchema>;
 
-export function defineConfig(config: DocumenteeConfig): DocumenteeConfig {
+export function defineConfig<const Config extends DocumenteeConfigInput>(config: Config): Config {
   return config;
 }
 
@@ -170,6 +303,7 @@ export async function loadConfig(projectRoot: string): Promise<DocumenteeConfig>
   const parsed = configSchema.parse(raw);
   assertUniqueOpenApiIds(parsed.openapi.specs);
   assertValidVersions(parsed.versions);
+  assertValidI18n(parsed.i18n);
   return parsed;
 }
 
@@ -187,18 +321,23 @@ function normalizeDocsJson(input: unknown): DocumenteeConfig {
       url: parsed.url,
       logo: parsed.logo,
     },
-    content: { directory: "docs" },
+    content: { directory: "docs", exclude: [] },
     versions: parsed.versions,
     navigation: parsed.navigation,
     openapi: parsed.openapi,
     seo: parsed.seo,
     redirects: parsed.redirects ?? [],
     search: { provider: "none" },
+    i18n: parsed.i18n,
+    assistant: parsed.assistant,
+    feedback: parsed.feedback,
+    analytics: parsed.analytics,
     theme: {
       ...parsed.theme,
       primaryColor: parsed.theme?.primaryColor ?? parsed.colors?.primary,
       darkMode: parsed.theme?.darkMode ?? true,
     },
+    layout: parsed.layout,
   });
 }
 
@@ -212,10 +351,11 @@ function assertUniqueOpenApiIds(specs: OpenApiSpecConfig[]): void {
   }
 }
 
-function assertValidVersions(versions: ParsedDocumenteeConfig["versions"]): void {
+function assertValidVersions(versions: DocumenteeConfig["versions"]): void {
   const ids = new Set<string>();
   const routePrefixes = new Set<string>();
   let defaultCount = 0;
+  let latestCount = 0;
 
   for (const version of versions) {
     if (ids.has(version.id)) {
@@ -229,10 +369,30 @@ function assertValidVersions(versions: ParsedDocumenteeConfig["versions"]): void
     routePrefixes.add(version.routePrefix);
 
     if (version.default) defaultCount += 1;
+    if (version.latest) latestCount += 1;
   }
 
   if (defaultCount > 1) {
     throw new Error("Only one version can be marked as default");
+  }
+  if (latestCount > 1) {
+    throw new Error("Only one version can be marked as latest");
+  }
+}
+
+function assertValidI18n(i18n: DocumenteeConfig["i18n"]): void {
+  if (!i18n) return;
+  const codes = new Set<string>();
+
+  for (const locale of i18n.locales) {
+    if (codes.has(locale.code)) {
+      throw new Error(`Duplicate i18n locale code: ${locale.code}`);
+    }
+    codes.add(locale.code);
+  }
+
+  if (!codes.has(i18n.defaultLocale)) {
+    throw new Error(`i18n.defaultLocale must be included in i18n.locales: ${i18n.defaultLocale}`);
   }
 }
 

@@ -112,7 +112,13 @@ describe("normalizeOperations", () => {
       fields: [{ name: "text", required: false, schemaType: "string" }],
     });
     expect(operation.responses).toEqual([
-      { status: "200", description: "Updated", mediaTypes: ["application/json"], schemaRefs: ["Message"] },
+      {
+        status: "200",
+        description: "Updated",
+        mediaTypes: ["application/json"],
+        schemaRefs: ["Message"],
+        fields: [{ name: "id", required: false, schemaType: "string" }],
+      },
       { status: "404", description: "Missing", mediaTypes: [], schemaRefs: [] },
     ]);
     expect(operation.beta).toBe(true);
@@ -200,6 +206,10 @@ describe("normalizeOperations", () => {
           description: "Product images.",
           schemaType: "array",
           schemaFormat: "binary",
+          items: {
+            schemaType: "string",
+            schemaFormat: "binary",
+          },
         },
         {
           name: "price",
@@ -266,7 +276,10 @@ describe("normalizeOperations", () => {
     const spec: OpenApiDocument = {
       openapi: "3.1.0",
       info: { title: "Acme", version: "1.0.0" },
-      servers: [{ url: "https://api.acme.test" }],
+      servers: [
+        { url: "https://api.acme.test", description: "Production" },
+        { url: "https://sandbox.acme.test", description: "Sandbox" },
+      ],
       paths: {
         "/messages": {
           get: {
@@ -286,6 +299,11 @@ describe("normalizeOperations", () => {
     });
 
     expect(operation.playground?.baseUrl).toBe("https://api.acme.test");
+    expect(operation.serverUrl).toBe("https://api.acme.test");
+    expect(operation.serverUrls).toEqual([
+      { url: "https://api.acme.test", description: "Production" },
+      { url: "https://sandbox.acme.test", description: "Sandbox" },
+    ]);
   });
 
   it("normalizes OpenAPI 3.0 component refs and root security compactly", () => {
@@ -356,7 +374,13 @@ describe("normalizeOperations", () => {
       schemaRefs: ["CreateMessage"],
     });
     expect(operation.responses).toEqual([
-      { status: "201", description: "Created", mediaTypes: ["application/json"], schemaRefs: ["Message"] },
+      {
+        status: "201",
+        description: "Created",
+        mediaTypes: ["application/json"],
+        schemaRefs: ["Message"],
+        fields: [{ name: "Message", required: false, schemaRef: "Message", schemaType: "object" }],
+      },
     ]);
     expect(operation.codeSamples).toEqual([{ lang: "JavaScript", source: "fetch('/messages')" }]);
     expect(JSON.stringify(operation)).not.toContain("nullable");
@@ -400,7 +424,216 @@ describe("normalizeOperations", () => {
     const [operation] = normalizeOperations("core", "/api-reference", spec);
 
     expect(operation.responses[0].schemaRefs).toEqual(["SearchResult"]);
-    expect(JSON.stringify(operation)).not.toContain("oneOf");
+    expect(operation.responses[0].fields).toEqual([
+      {
+        name: "SearchResult",
+        required: false,
+        schemaRef: "SearchResult",
+        schemaType: "oneOf",
+        oneOf: [
+          { schemaRef: "UserResult", schemaType: "object", fields: [{ name: "kind", required: false }] },
+          { schemaRef: "MessageResult", schemaType: "object", fields: [{ name: "kind", required: false }] },
+        ],
+      },
+    ]);
+    expect(JSON.stringify(operation)).not.toContain("properties");
     expect(JSON.stringify(operation)).not.toContain("const");
+  });
+
+  it("normalizes rich request and response schema metadata compactly", () => {
+    const spec: OpenApiDocument = {
+      openapi: "3.1.0",
+      info: { title: "Acme", version: "1.0.0" },
+      paths: {
+        "/messages": {
+          post: {
+            operationId: "createMessage",
+            requestBody: {
+              required: true,
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/CreateMessageRequest" },
+                  examples: {
+                    queued: {
+                      summary: "Queued message",
+                      value: { status: "queued", profile: { displayName: "Ada" } },
+                    },
+                  },
+                },
+              },
+            },
+            responses: {
+              "201": {
+                description: "Created",
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/Message" },
+                    example: { id: "msg_123", status: "queued" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          CreateMessageRequest: {
+            type: "object",
+            required: ["status", "profile", "attachments", "target"],
+            properties: {
+              status: {
+                type: "string",
+                description: "Current message status.",
+                enum: ["queued", "sent", "failed"],
+                default: "queued",
+              },
+              profile: {
+                type: "object",
+                description: "Sender profile.",
+                required: ["displayName"],
+                properties: {
+                  displayName: { type: "string", example: "Ada" },
+                  timezone: { type: ["string", "null"], nullable: true },
+                },
+              },
+              attachments: {
+                type: "array",
+                description: "Files to include.",
+                items: { $ref: "#/components/schemas/Attachment" },
+              },
+              target: {
+                oneOf: [
+                  { $ref: "#/components/schemas/UserTarget" },
+                  { $ref: "#/components/schemas/ChannelTarget" },
+                ],
+              },
+              legacyId: {
+                type: "string",
+                deprecated: true,
+                nullable: true,
+              },
+              tags: {
+                type: "array",
+                items: { type: "string", enum: ["urgent", "internal"] },
+              },
+            },
+          },
+          Attachment: {
+            type: "object",
+            required: ["url"],
+            properties: {
+              url: { type: "string", format: "uri" },
+            },
+          },
+          UserTarget: { type: "object", properties: { userId: { type: "string" } } },
+          ChannelTarget: { type: "object", properties: { channelId: { type: "string" } } },
+          Message: {
+            allOf: [
+              { $ref: "#/components/schemas/MessageBase" },
+              {
+                type: "object",
+                properties: {
+                  status: { type: "string", enum: ["queued", "sent", "failed"] },
+                },
+              },
+            ],
+          },
+          MessageBase: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+            },
+          },
+        },
+      },
+    };
+
+    const [operation] = normalizeOperations("core", "/api-reference", spec);
+
+    expect(operation.requestBody).toMatchObject({
+      required: true,
+      mediaTypes: ["application/json"],
+      schemaRefs: ["CreateMessageRequest"],
+      examples: [
+        {
+          name: "queued",
+          summary: "Queued message",
+          value: '{\n  "status": "queued",\n  "profile": {\n    "displayName": "Ada"\n  }\n}',
+        },
+      ],
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "status",
+      required: true,
+      description: "Current message status.",
+      schemaType: "string",
+      enumValues: ["queued", "sent", "failed"],
+      defaultValue: "queued",
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "legacyId",
+      required: false,
+      schemaType: "string",
+      nullable: true,
+      deprecated: true,
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "profile",
+      required: true,
+      description: "Sender profile.",
+      schemaType: "object",
+      fields: [
+        { name: "displayName", required: true, schemaType: "string", exampleValue: "Ada" },
+        { name: "timezone", required: false, schemaType: "string", nullable: true },
+      ],
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "attachments",
+      required: true,
+      description: "Files to include.",
+      schemaType: "array",
+      items: {
+        schemaRef: "Attachment",
+        schemaType: "object",
+        fields: [{ name: "url", required: true, schemaType: "string", schemaFormat: "uri" }],
+      },
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "target",
+      required: true,
+      schemaType: "oneOf",
+      oneOf: [
+        { schemaRef: "UserTarget", schemaType: "object", fields: [{ name: "userId", required: false, schemaType: "string" }] },
+        { schemaRef: "ChannelTarget", schemaType: "object", fields: [{ name: "channelId", required: false, schemaType: "string" }] },
+      ],
+    });
+    expect(operation.requestBody?.fields).toContainEqual({
+      name: "tags",
+      required: false,
+      schemaType: "array",
+      items: {
+        schemaType: "string",
+        enumValues: ["urgent", "internal"],
+      },
+    });
+    expect(operation.responses[0]).toMatchObject({
+      status: "201",
+      examples: [{ value: '{\n  "id": "msg_123",\n  "status": "queued"\n}' }],
+      fields: [
+        {
+          name: "Message",
+          required: false,
+          schemaRef: "Message",
+          schemaType: "allOf",
+          allOf: [
+            { schemaRef: "MessageBase", schemaType: "object", fields: [{ name: "id", required: false, schemaType: "string" }] },
+            { schemaType: "object", fields: [{ name: "status", required: false, schemaType: "string", enumValues: ["queued", "sent", "failed"] }] },
+          ],
+        },
+      ],
+    });
+    expect(JSON.stringify(operation)).not.toContain("properties");
+    expect(JSON.stringify(operation)).not.toContain("components");
   });
 });

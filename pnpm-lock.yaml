@@ -29,6 +29,9 @@ importers:
       '@documentee/llms':
         specifier: workspace:*
         version: link:../llms
+      '@documentee/openapi':
+        specifier: workspace:*
+        version: link:../openapi
       '@documentee/search':
         specifier: workspace:*
         version: link:../search
@@ -89,6 +92,9 @@ importers:
       '@documentee/core':
         specifier: workspace:*
         version: link:../core
+      '@documentee/openapi':
+        specifier: workspace:*
+        version: link:../openapi
     devDependencies:
       typescript:
         specifier: ^5.5.4

@@ -5,6 +5,7 @@ export function renderMdxComponents(markdown: string): string {
     transformDocusaurusComponents,
     transformNextraComponents,
     transformMintlifyComponents,
+    transformAuthoringComponents,
     transformBadges,
     transformIcons,
     transformCards,
@@ -18,6 +19,56 @@ export function renderMdxComponents(markdown: string): string {
     transformSteps,
     transformCallouts,
   ].reduce((input, transform) => transform(input), markdown);
+}
+
+function transformAuthoringComponents(input: string): string {
+  return input
+    .replace(/<PackageInstall([^>]*)\/>/g, (_match, attrsSource: string) => {
+      return renderPackageInstall(parseAttributes(attrsSource));
+    })
+    .replace(/<CliCommand([^>]*?)\/>/g, (_match, attrsSource: string) => {
+      return renderCliCommand(parseAttributes(attrsSource));
+    })
+    .replace(/<CliCommand([^>]*)>([\s\S]*?)<\/CliCommand>/g, (_match, attrsSource: string, body: string) => {
+      return renderCliCommand(parseAttributes(attrsSource), body);
+    })
+    .replace(/<Mermaid([^>]*)>([\s\S]*?)<\/Mermaid>/g, (_match, attrsSource: string, body: string) => {
+      return renderMermaid(parseAttributes(attrsSource), body);
+    })
+    .replace(/<Update([^>]*)>([\s\S]*?)<\/Update>/g, (_match, attrsSource: string, body: string) => {
+      return renderUpdate(parseAttributes(attrsSource), body);
+    })
+    .replace(/<Changelog\s*>([\s\S]*?)<\/Changelog>/g, (_match, body: string) => {
+      return `<section class="doc-changelog">${body.trim()}</section>`;
+    })
+    .replace(/<Column\b([^>]*)>([\s\S]*?)<\/Column>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const title = attrs.title ? `<h3>${escapeHtml(attrs.title)}</h3>` : "";
+      return `<section class="doc-column">${title}<p>${escapeHtml(body.trim())}</p></section>`;
+    })
+    .replace(/<Columns([^>]*)>([\s\S]*?)<\/Columns>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const cols = classToken(attrs.cols ?? attrs.columns ?? "2");
+      return `<div class="doc-columns doc-columns-${cols}">${body.trim()}</div>`;
+    })
+    .replace(/<Feature\b(?!Grid\b)([^>]*)>([\s\S]*?)<\/Feature>/g, (_match, attrsSource: string, body: string) => {
+      return renderFeature(parseAttributes(attrsSource), body);
+    })
+    .replace(/<FeatureGrid([^>]*)>([\s\S]*?)<\/FeatureGrid>/g, (_match, attrsSource: string, body: string) => {
+      const attrs = parseAttributes(attrsSource);
+      const cols = attrs.cols ?? attrs.columns;
+      const colsClass = cols ? ` doc-feature-grid-${classToken(cols)}` : "";
+      return `<div class="doc-feature-grid${colsClass}">${body.trim()}</div>`;
+    })
+    .replace(/<EndpointCard([^>]*)>([\s\S]*?)<\/EndpointCard>/g, (_match, attrsSource: string, body: string) => {
+      return renderEndpointCard(parseAttributes(attrsSource), body, "doc-endpoint-card");
+    })
+    .replace(/<OpenApiOperation([^>]*)\/>/g, (_match, attrsSource: string) => {
+      return renderEndpointCard(parseAttributes(attrsSource), undefined, "doc-openapi-operation");
+    })
+    .replace(/<OpenApiOperation([^>]*)>([\s\S]*?)<\/OpenApiOperation>/g, (_match, attrsSource: string, body: string) => {
+      return renderEndpointCard(parseAttributes(attrsSource), body, "doc-openapi-operation");
+    });
 }
 
 function transformDocusaurusComponents(input: string): string {
@@ -197,6 +248,63 @@ function renderField(kind: "param" | "response", attrs: Record<string, string>, 
 function renderExample(kind: "request" | "response", attrs: Record<string, string>, body: string): string {
   const title = attrs.title ?? (kind === "request" ? "Request example" : "Response example");
   return `<figure class="doc-example doc-${kind}-example"><figcaption>${escapeHtml(title)}</figcaption><pre><code>${escapeHtml(body.trim())}</code></pre></figure>`;
+}
+
+function renderPackageInstall(attrs: Record<string, string>): string {
+  const packageName = attrs.package ?? attrs.name ?? "documentee";
+  const managers = (attrs.managers ?? attrs.manager ?? "pnpm,npm,yarn")
+    .split(",")
+    .map((manager) => classToken(manager.trim()))
+    .filter(Boolean);
+  const commands = (managers.length > 0 ? managers : ["pnpm"]).map((manager) => {
+    const command = installCommand(manager, packageName);
+    return `<li><span>${escapeHtml(manager)}</span><code>${escapeHtml(command)}</code></li>`;
+  }).join("");
+
+  return `<figure class="doc-package-install"><figcaption>Install ${escapeHtml(packageName)}</figcaption><ul>${commands}</ul></figure>`;
+}
+
+function renderCliCommand(attrs: Record<string, string>, body = ""): string {
+  const command = attrs.command ?? body.trim() ?? "documentee --help";
+  const title = attrs.title ? `<figcaption>${escapeHtml(attrs.title)}</figcaption>` : "";
+  return `<figure class="doc-cli-command">${title}<pre><code>${escapeHtml(command)}</code></pre></figure>`;
+}
+
+function renderMermaid(attrs: Record<string, string>, body: string): string {
+  const title = attrs.title ? `<figcaption>${escapeHtml(attrs.title)}</figcaption>` : "";
+  return `<figure class="doc-mermaid">${title}<pre><code class="language-mermaid">${escapeHtml(body.trim())}</code></pre></figure>`;
+}
+
+function renderUpdate(attrs: Record<string, string>, body: string): string {
+  const label = attrs.label ? `<span class="doc-update-label">${escapeHtml(attrs.label)}</span>` : "";
+  const date = attrs.date ? `<time>${escapeHtml(attrs.date)}</time>` : "";
+  const title = attrs.title ?? "Update";
+  return `<article class="doc-update"><header>${label}<h3>${escapeHtml(title)}</h3>${date}</header><p>${escapeHtml(body.trim())}</p></article>`;
+}
+
+function renderFeature(attrs: Record<string, string>, body: string): string {
+  const title = attrs.title ?? "Feature";
+  const icon = attrs.icon ? `<span class="doc-feature-icon" aria-hidden="true">${escapeHtml(iconGlyph(attrs.icon))}</span>` : "";
+  return `<article class="doc-feature">${icon}<div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(body.trim())}</p></div></article>`;
+}
+
+function renderEndpointCard(attrs: Record<string, string>, body: string | undefined, className: string): string {
+  const method = classToken(attrs.method ?? "GET").toUpperCase();
+  const methodClass = classToken(attrs.method ?? "get");
+  const path = attrs.path ?? attrs.route ?? "/";
+  const summary = attrs.summary ?? body?.trim() ?? attrs.title ?? path;
+  const title = `<span class="method method-${methodClass}">${escapeHtml(method)}</span><code>${escapeHtml(path)}</code>`;
+  const heading = attrs.href
+    ? `<a class="doc-endpoint-card-link" href="${escapeHtml(attrs.href)}">${title}</a>`
+    : `<div class="doc-endpoint-card-link">${title}</div>`;
+  return `<article class="${className} method-${methodClass}">${heading}<p>${escapeHtml(summary)}</p></article>`;
+}
+
+function installCommand(manager: string, packageName: string): string {
+  if (manager === "npm") return `npm install ${packageName}`;
+  if (manager === "yarn") return `yarn add ${packageName}`;
+  if (manager === "bun") return `bun add ${packageName}`;
+  return `${manager} add ${packageName}`;
 }
 
 function parseAttributes(source: string): Record<string, string> {

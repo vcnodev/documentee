@@ -11,9 +11,11 @@ Documentee ships a workspace CLI package in `packages/cli`.
 
 ```bash
 documentee init <project>
+documentee init <project> --template <api-first|product-docs|enterprise-docs>
+documentee init --template <api-first|product-docs|enterprise-docs>
 ```
 
-Creates a starter project.
+Creates a starter project. `api-first` is the default template and keeps the existing API reference starter. `product-docs` creates product onboarding, workflow, and changelog pages. `enterprise-docs` creates administration, security, compliance, and admin API starter content.
 
 ## validate
 
@@ -23,13 +25,22 @@ documentee validate <project>
 
 Loads config, builds the manifest, and reports duplicate routes, broken navigation targets, broken internal links, redirect conflicts, and version/spec reference issues.
 
+## audit
+
+```bash
+documentee audit <project>
+documentee audit <project> --format json
+```
+
+Builds the manifest and prints a stable audit report for CI and launch review. Checks include broken internal links, missing descriptions, missing H1 headings, duplicate titles, public private/draft paths, OpenAPI operations without examples, missing AI-readable site metadata, oversized pages, missing search route when Pagefind is configured, and sitemap/robots consistency. Markdown is the default format; JSON returns `{ summary, issues }`.
+
 ## build
 
 ```bash
 documentee build <project> --out <dir>
 ```
 
-Builds static HTML, SEO artifacts, redirects, `llms.txt`, `llms-full.txt`, and Pagefind assets when search is enabled.
+Builds static HTML, SEO artifacts, redirects, `llms.txt`, `llms-full.txt`, `llms.json`, `skill.md`, and Pagefind assets when search is enabled.
 
 ## dev
 
@@ -50,10 +61,35 @@ Builds the static artifact first, then serves the built directory.
 ## migrate
 
 ```bash
-documentee migrate <mintlify|docusaurus|nextra> <source> <target>
+documentee migrate <mintlify|docusaurus|nextra|scalar|redocly> <source> <target>
 ```
 
-Copies docs into a Documentee project and applies compatibility transforms for common framework-specific MDX.
+Copies docs into a Documentee project and applies compatibility transforms for common framework-specific MDX. The migrator maps common site metadata, navigation, OpenAPI specs, redirects, search settings, SEO metadata, and theme colors when the source framework exposes them. Each migration writes `migration-report.md` with converted files, unsupported components, broken local doc links, and manual follow-up items.
+
+## diff-openapi
+
+```bash
+documentee diff-openapi old.yaml new.yaml
+```
+
+Compares two OpenAPI files and prints a stable Markdown report with added operations, removed operations, request field changes, response status changes, deprecated operations, and potential breaking changes.
+
+## generate-mcp
+
+```bash
+documentee generate-mcp . --out .documentee-mcp
+```
+
+Generates a local read-only MCP server from the docs manifest and `llms.json` chunk index. The output folder includes `package.json`, `server.mjs`, `llms.json`, and `README.md`.
+
+The generated server exposes:
+
+- `search_docs(query)`
+- `read_doc(route)`
+- `list_api_operations()`
+- `read_api_operation(method, path)`
+
+Use it when an AI coding tool needs local access to the current docs without a hosted service.
 
 ## Repository Commands
 

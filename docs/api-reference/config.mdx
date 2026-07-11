@@ -39,11 +39,32 @@ This page documents the current Documentee configuration surface. Update it when
   label: "Version 1",
   routePrefix: "/v1",
   content: { directory: "docs/v1" },
-  default: false
+  default: false,
+  latest: false,
+  deprecated: false
 }
 ```
 
-Version ids must be unique. Route prefixes must be unique. Only one version can be marked as default.
+Version ids must be unique. Route prefixes must be unique. Only one version can be marked as default, and only one version can be marked as latest. The static version switcher shows `Latest` and `Deprecated` badges when `latest` or `deprecated` are enabled. Routes for the latest version emit canonical metadata that points to the matching unversioned route.
+
+## i18n
+
+`i18n` adds locale metadata and locale-prefixed translated docs routes:
+
+```ts
+i18n: {
+  defaultLocale: "en",
+  locales: [
+    { code: "en", label: "English" },
+    { code: "fr", label: "Français" },
+    { code: "ar", label: "العربية", dir: "rtl" }
+  ]
+}
+```
+
+The default locale stays unprefixed unless `prefixDefaultLocale` is `true`. Non-default locale content is loaded from folders under the configured content directory, such as `docs/fr/index.mdx` and `docs/ar/index.mdx`. RTL locales set `<html dir="rtl">` and appear in the generated locale switcher.
+
+`i18n.defaultLocale` must be included in `i18n.locales`.
 
 ## openapi.specs
 
@@ -61,7 +82,11 @@ Version ids must be unique. Route prefixes must be unique. Only one version can 
     baseUrl: "https://api.example.test",
     auth: "bearer",
     apiKeyName: "x-api-key",
-    apiKeyLocation: "header"
+    apiKeyLocation: "header",
+    environments: [
+      { name: "Production", baseUrl: "https://api.example.test" },
+      { name: "Sandbox", baseUrl: "https://sandbox.example.test" }
+    ]
   }
 }
 ```
@@ -70,15 +95,54 @@ Version ids must be unique. Route prefixes must be unique. Only one version can 
 
 ## playground
 
-`playground.enabled` defaults to `false`. `playground.auth` can be `none`, `bearer`, or `apiKey`. `playground.apiKeyLocation` can be `header` or `query`. Browser requests still depend on the API CORS policy.
+`playground.enabled` defaults to `false`. `playground.auth` can be `none`, `bearer`, or `apiKey`. `playground.apiKeyLocation` can be `header` or `query`. `playground.environments` adds named base URL presets to the try-it UI. Browser requests still depend on the API CORS policy.
 
 ## search.provider
 
-`search.provider` can be `none` or `pagefind`. `pagefind` generates `/search/` with a static fallback index and Pagefind UI assets.
+`search.provider` can be `none` or `pagefind`. `pagefind` generates `/search/` with grouped static results, search index summary counts, and Pagefind UI assets. Pagefind assets load only on `/search/`; ordinary docs pages use a lightweight grouped suggestion modal.
+
+## assistant
+
+`assistant` is disabled by default. Enable it only when you provide your own endpoint:
+
+```ts
+assistant: {
+  enabled: true,
+  endpoint: "/api/docs-assistant"
+}
+```
+
+When enabled, Documentee renders a small ask-docs form that sends the query plus current route, page title, and URL to `assistant.endpoint`. The endpoint can be a site path or an `http`/`https` URL. Documentee does not implement an assistant backend.
+
+## feedback
+
+`feedback` is disabled by default. Enable it only when you provide your own collection endpoint:
+
+```ts
+feedback: {
+  enabled: true,
+  endpoint: "https://example.com/docs-feedback"
+}
+```
+
+When enabled, Documentee renders helpful and not helpful buttons with an optional comment field. The opt-in script sends the current route, page title, vote, and comment to `feedback.endpoint`. The endpoint can be a site path or an `http`/`https` URL. Documentee does not host or store feedback responses.
+
+## analytics
+
+`analytics` is disabled by default. Use `provider: "custom"` to attach an external analytics script without adding a provider dependency to Documentee:
+
+```ts
+analytics: {
+  provider: "custom",
+  scriptSrc: "https://analytics.example.com/script.js"
+}
+```
+
+Documentee renders a single deferred script tag only when `analytics` is configured. `scriptSrc` must be a site path or an `http`/`https` URL; inline JavaScript and dangerous URL protocols are rejected.
 
 ## theme
 
-`theme.preset` can be `mint`, `slate`, `neutral`, or `highContrast`.
+`theme.preset` can be `neutral`, `mint`, `slate`, `highContrast`, `classic`, `terminal`, `startup`, `enterprise`, `api`, or `minimal`. Each preset includes light tokens and dark-mode tokens when `darkMode` is `true`.
 
 Custom tokens override preset values:
 
@@ -95,6 +159,46 @@ Custom tokens override preset values:
 - `navWidth`
 - `customCss`
 - `darkMode`
+
+## layout
+
+`layout` stores documentation shell preferences:
+
+```ts
+{
+  nav: "sidebar",
+  toc: "right",
+  footer: true,
+  breadcrumbs: true,
+  editUrl: "https://github.com/acme/docs/edit/main",
+  announcement: "v1.0 is available"
+}
+```
+
+`layout.nav` can be `sidebar`, `topbar`, or `hybrid`. `layout.toc` can be `right`, `inline`, or `hidden`. `layout.footer` and `layout.breadcrumbs` default to `true`. `layout.editUrl` stores an optional edit-link base URL. `layout.announcement` stores optional site-wide announcement text.
+
+## plugins
+
+`plugins` is optional and supported from TypeScript config files:
+
+```ts
+plugins: [
+  {
+    name: "html-marker",
+    transformManifest(manifest) {
+      return manifest;
+    },
+    transformHtml(html, route, manifest) {
+      return html;
+    },
+    validate(manifest) {
+      return [];
+    }
+  }
+]
+```
+
+Plugins run in array order. `transformManifest` runs after Documentee has loaded content, OpenAPI specs, locales, and versions. `transformHtml` runs when static/dev HTML is rendered. `validate` adds diagnostics to the normal validation result. Plugins are intentionally narrow: they can extend generated output, but they do not replace content loading or fork the manifest pipeline.
 
 ## seo
 

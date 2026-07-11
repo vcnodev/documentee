@@ -16,10 +16,38 @@ Use these components for richer docs pages while keeping the output static.
 <Card title="API Reference" icon="api" href="/api-reference/list-messages">Generate compact endpoint pages from OpenAPI.</Card>
 </CardGroup>
 
+<PackageInstall package="documentee" managers="pnpm,npm,yarn" />
+
+<CliCommand command="documentee build examples/basic --out dist-example" />
+
+<FeatureGrid>
+<Feature title="Static output" icon="check">Render rich pages without client hydration.</Feature>
+<Feature title="Agent-ready" icon="code">Ship llms.txt, llms.json, and skill.md with every build.</Feature>
+</FeatureGrid>
+
+<Columns cols="2">
+<Column title="Authoring">Use compact components for guides, changelogs, and API cards.</Column>
+<Column title="Delivery">Keep generated output readable, searchable, and static-first.</Column>
+</Columns>
+
+<Changelog>
+<Update title="Richer authoring" date="2026-07-07" label="New">Package install blocks, CLI commands, feature grids, changelogs, and endpoint cards are available.</Update>
+</Changelog>
+
+<EndpointCard method="GET" path="/messages" href="/api-reference/list-messages">List messages from the API.</EndpointCard>
+
+<OpenApiOperation method="POST" path="/messages" summary="Create a message" href="/api-reference/create-message" />
+
 <AccordionGroup>
 <Accordion title="Do these components need browser JavaScript?">No. They render to static HTML, including native details elements for accordions.</Accordion>
 <Accordion title="Can fields describe request and response shapes?">Yes. Use ParamField and ResponseField for compact inline API documentation.</Accordion>
 </AccordionGroup>
+
+<Mermaid title="Static build flow">
+graph TD
+  A[Markdown] --> B[Manifest]
+  B --> C[Static HTML]
+</Mermaid>
 
 <ParamField path="body.message" type="string" required>
 The message text sent to the API.

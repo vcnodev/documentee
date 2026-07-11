@@ -25,6 +25,7 @@ Use this guide when you are an agent updating Documentee documentation.
 - Update `README.md` when the public feature list or core workflow changes.
 - Update package READMEs when ownership-specific behavior changes.
 - Keep examples aligned with docs when a feature has a config snippet.
+- Check generated AI artifacts when route, command, or agent guidance changes: `llms.txt`, `llms-full.txt`, `llms.json`, and `skill.md`.
 
 ## Config Reference Checklist
 
@@ -48,6 +49,8 @@ pnpm validate
 pnpm docs:build
 pnpm vitest run packages/cli/test/dogfood-docs.test.ts
 ```
+
+After `pnpm docs:build`, inspect `dist-docs/skill.md` when the change affects agent-facing guidance.
 
 Run the full gate before final completion:
 

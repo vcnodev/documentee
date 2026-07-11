@@ -16,9 +16,10 @@ Each operation becomes a compact static route with:
 - Tags, beta, and deprecated badges.
 - Auth requirements.
 - Parameters.
-- Request body media types and schema links.
-- Responses and schema links.
-- Code samples.
+- Request body media types, schema links, compact field metadata, and examples.
+- Responses with schema links, compact field metadata, and examples.
+- Generated cURL, JavaScript `fetch`, Python `requests`, and Go `net/http` code samples.
+- Authored code samples from OpenAPI extensions.
 - Optional browser playground.
 
 ## Multi-Spec Portals
@@ -33,6 +34,12 @@ Set `openapi.specs[].version` to attach a spec to a configured docs version. The
 
 Shared schema references are emitted as spec-scoped schema routes, such as `/schemas/core/Message`, to avoid collisions across multiple specs.
 
+Operation metadata stays compact. Documentee resolves local component references enough to expose object fields, nested object fields, arrays, array item refs, enums, default values, nullable and deprecated state, examples, and `oneOf`/`anyOf`/`allOf` composition without embedding the original raw schema graph into each operation route.
+
+Schema fields render as static expandable sections. Operation pages show request and response field explorers beside schema links, examples render as copyable code blocks, and shared schema routes reuse the same explorer when compact metadata is available.
+
+Code samples render as stacked static sections, so operation pages stay useful without adding client-side tab JavaScript. Generated samples include the first OpenAPI server URL when present, query placeholders, auth headers, content type, and a compact request body example when body metadata exists.
+
 ## Browser Playground
 
 The playground is opt in per spec:
@@ -41,8 +48,14 @@ The playground is opt in per spec:
 playground: {
   enabled: true,
   baseUrl: "https://api.example.test",
-  auth: "bearer"
+  auth: "bearer",
+  environments: [
+    { name: "Production", baseUrl: "https://api.example.test" },
+    { name: "Sandbox", baseUrl: "https://sandbox.example.test" }
+  ]
 }
 ```
 
 The playground adds client JavaScript only to enabled operation pages. It does not store secrets. Requests depend on the API CORS policy.
+
+Enabled operation pages include an environment selector, request preview, response status, response headers, response body, and clearer network/CORS/auth error states. The selector uses configured `playground.environments` and OpenAPI `servers` when available.

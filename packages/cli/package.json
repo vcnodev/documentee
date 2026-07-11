@@ -23,6 +23,7 @@
   "dependencies": {
     "@documentee/core": "workspace:*",
     "@documentee/llms": "workspace:*",
+    "@documentee/openapi": "workspace:*",
     "@documentee/search": "workspace:*"
   },
   "devDependencies": {

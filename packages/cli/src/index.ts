@@ -1,31 +1,48 @@
 #!/usr/bin/env tsx
+import { auditCommand, type AuditFormat } from "./commands/audit.js";
 import { buildCommand } from "./commands/build.js";
 import { devCommand } from "./commands/dev.js";
-import { initCommand } from "./commands/init.js";
+import { diffOpenApiCommand } from "./commands/diff-openapi.js";
+import { generateMcpCommand } from "./commands/generate-mcp.js";
+import { initCommand, isInitTemplate, type InitTemplate } from "./commands/init.js";
 import { migrateCommand, type MigrationSource } from "./commands/migrate.js";
 import { previewCommand } from "./commands/preview.js";
+import { parseScreenshotsArgs, screenshotsCommand } from "./commands/screenshots.js";
 import { validateCommand } from "./commands/validate.js";
 import { resolve } from "node:path";
 
+export { auditCommand } from "./commands/audit.js";
 export { buildCommand } from "./commands/build.js";
 export { devCommand } from "./commands/dev.js";
+export { diffOpenApiCommand } from "./commands/diff-openapi.js";
+export { generateMcpCommand } from "./commands/generate-mcp.js";
 export { initCommand } from "./commands/init.js";
 export { migrateCommand } from "./commands/migrate.js";
 export { previewCommand } from "./commands/preview.js";
+export { screenshotsCommand } from "./commands/screenshots.js";
 export { validateCommand } from "./commands/validate.js";
 
 export async function runCli(argv: string[]): Promise<void> {
   const [command, projectRoot, ...rest] = argv;
 
   if (command === "init") {
-    if (!projectRoot) throw new Error("Usage: documentee init <project>");
-    await initCommand(resolveCliPath(projectRoot));
+    const options = parseInitArgs([projectRoot, ...rest].filter((value): value is string => Boolean(value)));
+    await initCommand(resolveCliPath(options.project), { template: options.template });
     return;
   }
 
   if (command === "validate") {
     if (!projectRoot) throw new Error("Usage: documentee validate <project>");
     await validateCommand(resolveCliPath(projectRoot));
+    return;
+  }
+
+  if (command === "audit") {
+    if (!projectRoot) throw new Error("Usage: documentee audit <project> --format <markdown|json>");
+    const formatIndex = rest.indexOf("--format");
+    const format = formatIndex >= 0 ? rest[formatIndex + 1] : "markdown";
+    if (!isAuditFormat(format)) throw new Error("Usage: documentee audit <project> --format <markdown|json>");
+    console.log(await auditCommand(resolveCliPath(projectRoot), { format }));
     return;
   }
 
@@ -65,16 +82,78 @@ export async function runCli(argv: string[]): Promise<void> {
     return;
   }
 
+  if (command === "screenshots") {
+    const parsed = parseScreenshotsArgs([projectRoot, ...rest].filter((value): value is string => Boolean(value)));
+    await screenshotsCommand(resolveCliPath(parsed.project), {
+      outDir: resolveCliPath(parsed.outDir),
+      buildOutDir: resolveCliPath(parsed.buildOutDir)
+    });
+    return;
+  }
+
+  if (command === "diff-openapi") {
+    const [oldSpec, newSpec] = [projectRoot, ...rest];
+    if (!oldSpec || !newSpec) throw new Error("Usage: documentee diff-openapi <old.yaml> <new.yaml>");
+    console.log(await diffOpenApiCommand(resolveCliPath(oldSpec), resolveCliPath(newSpec)));
+    return;
+  }
+
+  if (command === "generate-mcp") {
+    if (!projectRoot) throw new Error("Usage: documentee generate-mcp <project> --out <dir>");
+    const outIndex = rest.indexOf("--out");
+    const outDir = outIndex >= 0 ? rest[outIndex + 1] : ".documentee-mcp";
+    if (!outDir) throw new Error("Usage: documentee generate-mcp <project> --out <dir>");
+    await generateMcpCommand(resolveCliPath(projectRoot), resolveCliPath(outDir));
+    console.log(`Generated Documentee MCP server at ${resolveCliPath(outDir)}`);
+    return;
+  }
+
   if (command === "migrate") {
     const [sourceType, source, target] = [projectRoot, ...rest];
     if (!sourceType || !source || !target) {
-      throw new Error("Usage: documentee migrate <mintlify|docusaurus|nextra> <source> <target>");
+      throw new Error("Usage: documentee migrate <mintlify|docusaurus|nextra|scalar|redocly> <source> <target>");
     }
     await migrateCommand(sourceType as MigrationSource, resolveCliPath(source), resolveCliPath(target));
     return;
   }
 
   throw new Error(`Unknown command: ${command ?? "(missing)"}`);
+}
+
+function parseInitArgs(args: string[]): { project: string; template?: InitTemplate } {
+  let project: string | undefined;
+  let template: InitTemplate | undefined;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--template") {
+      const value = args[index + 1];
+      if (!value || !isInitTemplate(value)) {
+        throw new Error("Usage: documentee init <project> --template <api-first|product-docs|enterprise-docs>");
+      }
+      template = value;
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith("--")) {
+      throw new Error(`Unknown init option: ${arg}`);
+    }
+    if (project) {
+      throw new Error("Usage: documentee init <project> --template <api-first|product-docs|enterprise-docs>");
+    }
+    project = arg;
+  }
+
+  if (!project && !template) {
+    throw new Error("Usage: documentee init <project> --template <api-first|product-docs|enterprise-docs>");
+  }
+
+  return { project: project ?? ".", template };
+}
+
+function isAuditFormat(value: string | undefined): value is AuditFormat {
+  return value === "markdown" || value === "json";
 }
 
 function resolveCliPath(input: string): string {

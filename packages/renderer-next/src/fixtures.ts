@@ -50,7 +50,8 @@ export function createNoClientJsFixtureManifest(): SiteManifest {
   return {
     config: {
       site: { name: "Acme Docs", url: "https://docs.acme.test", description: "Docs for Acme" },
-      content: { directory: "docs" },
+      content: { directory: "docs", exclude: [] },
+      versions: [],
       navigation: [],
       openapi: { specs: [] },
       seo: {
@@ -61,6 +62,7 @@ export function createNoClientJsFixtureManifest(): SiteManifest {
       redirects: [],
       search: { provider: "none" },
       theme: { darkMode: true },
+      layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
     },
     pages: [],
     operations: [

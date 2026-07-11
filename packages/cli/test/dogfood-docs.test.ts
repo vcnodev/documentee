@@ -20,6 +20,9 @@ describe("dogfood docs", () => {
     expect(routes).toContain("/components");
     expect(routes).toContain("/ai-agents");
     expect(routes).toContain("/ai-agents/doc-builder-guide");
+    expect(routes).toContain("/comparisons/mintlify");
+    expect(routes).toContain("/showcase/static-api-docs");
+    expect([...routes].filter((route) => route.includes("/superpowers/"))).toEqual([]);
     expect(validateManifest(manifest)).toEqual([]);
   });
 

@@ -28,8 +28,38 @@ Welcome to **Acme**.
     expect(pages[0].title).toBe("Quickstart");
     expect(pages[0].description).toBe("Start using Acme.");
     expect(pages[0].seo).toEqual({});
+    expect(pages[0].sourceRelativePath).toBe("get-started/quickstart.mdx");
+    expect(pages[0].sourceProjectPath).toBe("docs/get-started/quickstart.mdx");
+    expect(new Date(pages[0].lastUpdated).toString()).not.toBe("Invalid Date");
     expect(pages[0].html).toContain("<h1>Hello</h1>");
     expect(pages[0].html).toContain("<strong>Acme</strong>");
+  });
+
+  it("excludes Markdown and MDX files by patterns relative to the content directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-content-"));
+    await mkdir(join(root, "docs", "public"), { recursive: true });
+    await mkdir(join(root, "docs", "superpowers"), { recursive: true });
+    await writeFile(join(root, "docs", "index.mdx"), "---\ntitle: Home\n---\n# Home\n");
+    await writeFile(join(root, "docs", "public", "page.md"), "---\ntitle: Public\n---\n# Public\n");
+    await writeFile(join(root, "docs", "superpowers", "private.mdx"), "---\ntitle: Private\n---\n# Private\n");
+
+    const pages = await loadContentPages(root, { directory: "docs", exclude: ["superpowers/**"] });
+
+    expect(pages.map((page) => page.route)).toEqual(["/", "/public/page"]);
+    expect(pages.map((page) => page.title)).not.toContain("Private");
+  });
+
+  it("omits project-relative source metadata for content outside the project root", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-content-root-"));
+    const externalRoot = await mkdtemp(join(tmpdir(), "documentee-content-external-"));
+    await mkdir(join(externalRoot, "docs"), { recursive: true });
+    await writeFile(join(externalRoot, "docs", "outside.mdx"), "---\ntitle: Outside\n---\n# Outside\n");
+
+    const pages = await loadContentPages(root, { directory: join(externalRoot, "docs") });
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0].sourceRelativePath).toBe("outside.mdx");
+    expect(pages[0].sourceProjectPath).toBeUndefined();
   });
 
   it("loads SEO frontmatter fields", async () => {

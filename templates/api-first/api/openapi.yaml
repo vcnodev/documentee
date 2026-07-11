@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  title: Acme API
+  version: 1.0.0
+servers:
+  - url: https://api.acme.test/v1
+paths:
+  /messages:
+    get:
+      operationId: listMessages
+      summary: List messages
+      tags:
+        - Messages
+      responses:
+        "200":
+          description: Messages
+  /messages/{id}:
+    get:
+      operationId: getMessage
+      summary: Get a message
+      tags:
+        - Messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Message

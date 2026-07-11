@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { buildManifest, loadConfig, renderRoute } from "@documentee/core";
+import { buildManifest, loadConfig, renderRouteWithPlugins } from "@documentee/core";
 
 export interface DevOptions {
   port?: number;
@@ -21,7 +21,7 @@ export async function devCommand(projectRoot: string, options: DevOptions = {}):
       }
 
       response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-      response.end(renderRoute(manifest, route));
+      response.end(await renderRouteWithPlugins(manifest, route));
     } catch (error) {
       response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
       response.end(error instanceof Error ? error.message : String(error));

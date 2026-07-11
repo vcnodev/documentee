@@ -22,6 +22,20 @@ Docs changes should be made in `docs/` and reflected in `documentee.config.ts` n
 
 If a config field changes, update [Config Reference](/api-reference/config). If a CLI command changes, update [CLI Reference](/api-reference/cli). If renderer behavior changes, check the small HTML policy.
 
+## AI Outputs
+
+Static builds emit `llms.txt`, `llms-full.txt`, `llms.json`, and `skill.md`. Use `llms.json` when an agent needs a machine-readable route index with guide pages and API operations. Its route entries include semantic chunks with heading paths, source files, text, links, and compact API operation metadata when available. Use `skill.md` when an agent needs a compact project overview, reading order, important routes, verification commands, and contribution rules. Excluded content stays out of these outputs because it is filtered before the manifest is rendered.
+
+## Local MCP Server
+
+Generate a local read-only MCP server when an AI coding tool should search the current docs directly:
+
+```bash
+documentee generate-mcp . --out .documentee-mcp
+```
+
+The generated folder contains `llms.json`, `server.mjs`, package metadata, and a README. Its tools are `search_docs(query)`, `read_doc(route)`, `list_api_operations()`, and `read_api_operation(method, path)`.
+
 ## Verification
 
 Before claiming docs work is complete, run:

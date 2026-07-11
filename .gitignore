@@ -7,3 +7,4 @@ packages/*/dist/
 .gemini/
 test-project/
 dist-docs/
+.documentee-screenshots/

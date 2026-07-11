@@ -1,0 +1,28 @@
+---
+title: AI-Ready Docs
+description: How Documentee creates docs artifacts for coding agents and local MCP workflows.
+---
+
+# AI-Ready Docs
+
+Documentee treats agent-readable documentation as a build artifact, not a side project. The same manifest that renders human docs also writes files that coding agents can index, chunk, and use.
+
+## Generated artifacts
+
+- `llms.txt` for a concise route and API overview.
+- `llms-full.txt` for complete guide and API operation text.
+- `llms.json` for structured routes, descriptions, sources, API metadata, and chunks.
+- `skill.md` for agent instructions tailored to the docs site.
+- A local read-only MCP server from `documentee generate-mcp`.
+
+## Why it matters
+
+Agent workflows improve when context is explicit, stable, and small enough to retrieve. Documentee keeps human docs and agent docs connected so the repository has one source of truth.
+
+## Recommended workflow
+
+1. Write guide pages with clear descriptions.
+2. Keep OpenAPI summaries and examples up to date.
+3. Run `documentee audit` to catch missing AI-readable metadata.
+4. Publish static docs and agent artifacts together.
+5. Use `generate-mcp` when local tools need live doc lookup.
