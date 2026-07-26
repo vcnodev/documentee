@@ -1,6 +1,7 @@
 import { createServer, type Server } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, relative, resolve } from "node:path";
+import { loadConfig } from "@documentee/core";
 import { buildCommand } from "./build.js";
 
 export interface PreviewOptions {
@@ -11,11 +12,12 @@ export interface PreviewOptions {
 
 export async function previewCommand(projectRoot: string, options: PreviewOptions = {}): Promise<Server> {
   const outDir = resolve(options.outDir ?? "dist");
+  const config = await loadConfig(projectRoot);
   await buildCommand(projectRoot, outDir);
 
   const server = createServer(async (request, response) => {
     try {
-      const filePath = await resolvePreviewFile(outDir, request.url ?? "/");
+      const filePath = await resolvePreviewFile(outDir, request.url ?? "/", config.site.basePath);
       if (!filePath) {
         response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
         response.end("Not found");
@@ -37,9 +39,9 @@ export async function previewCommand(projectRoot: string, options: PreviewOption
   return server;
 }
 
-async function resolvePreviewFile(outDir: string, url: string): Promise<string | undefined> {
+async function resolvePreviewFile(outDir: string, url: string, basePath: string | undefined): Promise<string | undefined> {
   const parsed = new URL(url, "http://documentee.local");
-  const pathname = decodeURIComponent(parsed.pathname);
+  const pathname = stripBasePath(decodeURIComponent(parsed.pathname), basePath);
   const safePath = pathname.replace(/^\/+/, "");
   const candidates = pathname.endsWith("/") || extname(pathname) === ""
     ? [join(outDir, safePath, "index.html"), join(outDir, safePath)]
@@ -52,6 +54,20 @@ async function resolvePreviewFile(outDir: string, url: string): Promise<string |
   }
 
   return undefined;
+}
+
+function stripBasePath(pathname: string, basePath: string | undefined): string {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  if (!normalizedBasePath) return pathname;
+  if (pathname === normalizedBasePath) return "/";
+  if (pathname.startsWith(`${normalizedBasePath}/`)) return pathname.slice(normalizedBasePath.length) || "/";
+  return pathname;
+}
+
+function normalizeBasePath(basePath: string | undefined): string {
+  if (!basePath) return "";
+  const normalized = `/${basePath.replace(/^\/+|\/+$/g, "")}`;
+  return normalized === "/" ? "" : normalized;
 }
 
 function isInside(root: string, filePath: string): boolean {

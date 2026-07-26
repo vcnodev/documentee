@@ -27,7 +27,10 @@ Create content in `docs/`, configure the site in `documentee.config.ts`, then bu
 pnpm install
 pnpm docs:validate
 pnpm docs:build
+pnpm docs:preview
 ```
+
+For this repository, open `http://127.0.0.1:3000/documentee/` after `pnpm docs:preview` so local routing matches the GitHub Pages base path.
 
 The root `documentee.config.ts` is the source of truth for this dogfood site. External projects usually start with:
 
@@ -94,6 +97,7 @@ Before publishing a consumer-facing docs site:
 
 - Run `pnpm docs:validate`.
 - Run `pnpm docs:build`.
+- Run `pnpm docs:preview` and click through primary routes locally.
 - Confirm `dist-docs/index.html` exists.
 - Confirm `dist-docs/llms.txt`, `dist-docs/llms-full.txt`, `dist-docs/llms.json`, and `dist-docs/skill.md` exist.
 - Confirm GitHub Pages is configured to use GitHub Actions.

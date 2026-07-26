@@ -457,8 +457,11 @@ Build the dogfood docs from the root [documentee.config.ts](documentee.config.ts
 ```bash
 pnpm docs:validate
 pnpm docs:build
+pnpm docs:preview
 pnpm docs:screenshots
 ```
+
+For this repository, `docs:preview` serves the dogfood docs at `http://127.0.0.1:3000/documentee/` to match the GitHub Pages base path.
 
 Build the example project:
 

@@ -10,6 +10,7 @@
     "validate": "pnpm --filter @documentee/cli documentee validate examples/basic",
     "docs:validate": "pnpm --filter @documentee/cli documentee validate .",
     "docs:build": "pnpm --filter @documentee/cli documentee build . --out dist-docs",
+    "docs:preview": "pnpm --filter @documentee/cli documentee preview . --out dist-docs --port 3000",
     "docs:screenshots": "pnpm --filter @documentee/cli documentee screenshots . --out .documentee-screenshots --build-out dist-docs",
     "example:build": "pnpm --filter @documentee/cli documentee build examples/basic --out dist-example"
   },

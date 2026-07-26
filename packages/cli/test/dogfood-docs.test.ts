@@ -82,6 +82,7 @@ describe("dogfood docs", () => {
     expect(combined).toContain("pnpm validate");
     expect(combined).toContain("pnpm docs:validate");
     expect(combined).toContain("pnpm docs:build");
+    expect(combined).toContain("pnpm docs:preview");
     expect(combined).toContain("llms.txt");
     expect(combined).toContain("llms-full.txt");
     expect(combined).toContain("llms.json");
@@ -118,5 +119,6 @@ describe("dogfood docs", () => {
 
     expect(packageJson.scripts?.["docs:build"]).toBe("pnpm --filter @documentee/cli documentee build . --out dist-docs");
     expect(packageJson.scripts?.["docs:validate"]).toBe("pnpm --filter @documentee/cli documentee validate .");
+    expect(packageJson.scripts?.["docs:preview"]).toBe("pnpm --filter @documentee/cli documentee preview . --out dist-docs --port 3000");
   });
 });
