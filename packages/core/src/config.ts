@@ -264,6 +264,7 @@ const configSchema = z.object({
   site: z.object({
     name: z.string().min(1),
     url: z.string().optional(),
+    basePath: z.string().min(1).optional(),
     description: z.string().optional().default(""),
     logo: z.string().optional(),
   }),
@@ -291,6 +292,7 @@ const docsJsonSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   url: z.string().optional(),
+  basePath: z.string().optional(),
   logo: z.string().optional(),
   navigation: z.array(navigationPageSchema).default([]),
   versions: z.array(versionSchema).default([]),
@@ -361,6 +363,7 @@ function normalizeDocsJson(input: unknown): DocumenteeConfig {
       name: parsed.name,
       description: parsed.description ?? "",
       url: parsed.url,
+      basePath: parsed.basePath,
       logo: parsed.logo,
     },
     content: { directory: "docs", exclude: [] },

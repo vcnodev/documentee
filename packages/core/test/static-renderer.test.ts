@@ -149,6 +149,64 @@ describe("static renderer", () => {
     expect(html).toContain("Acme");
   });
 
+  it("prefixes internal links and assets when a site base path is configured", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "", basePath: "/documentee" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
+        navigation: [{ group: "Start", pages: ["/", "/quickstart"] }],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "pagefind" },
+        theme: { darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: [],
+      operations: [],
+      versions: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: '<h1>Home</h1><a href="/quickstart">Quickstart</a><a href="#local">Local</a><img src="/logo.png">',
+          markdown: "",
+        },
+        {
+          kind: "page",
+          route: "/quickstart",
+          title: "Quickstart",
+          description: "",
+          html: "<h1>Quickstart</h1>",
+          markdown: "",
+        },
+        {
+          kind: "search",
+          route: "/search",
+          title: "Search",
+          description: "",
+          html: "",
+          markdown: "",
+        },
+      ],
+    };
+
+    const homeHtml = renderRoute(manifest, manifest.routes[0]);
+    const searchHtml = renderRoute(manifest, manifest.routes[2]);
+
+    expect(homeHtml).toContain('class="doc-brand" href="/documentee/"');
+    expect(homeHtml).toContain('class="doc-search-link" href="/documentee/search/"');
+    expect(homeHtml).toContain('class="nav-link" href="/documentee/quickstart/"');
+    expect(homeHtml).toContain('href="/documentee/quickstart/"');
+    expect(homeHtml).toContain('href="#local"');
+    expect(homeHtml).toContain('src="/documentee/logo.png"');
+    expect(searchHtml).toContain('/documentee/_pagefind/pagefind-ui.css');
+    expect(searchHtml).toContain('/documentee/_pagefind/pagefind-ui.js');
+  });
+
   it("renders SEO metadata in HTML pages", () => {
     const manifest: SiteManifest = {
       config: {

@@ -44,10 +44,13 @@ describe("dogfood docs", () => {
 
     expect(configReference).toContain("theme.designSystem");
     expect(configReference).toContain("theme.overrides");
+    expect(configReference).toContain("site.basePath");
     expect(configReference).toContain("contentWidth");
     expect(configReference).toContain("methodGetColor");
+    expect(configurationGuide).toContain("site.basePath");
     expect(configurationGuide).toContain("contentWidth");
     expect(configurationGuide).toContain("methodGetColor");
+    expect(readme).toContain("site.basePath");
     expect(readme).toContain("contentWidth");
     expect(readme).toContain("methodGetColor");
     expect(configReference).toContain("openapi.specs");

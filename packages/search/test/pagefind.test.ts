@@ -15,6 +15,18 @@ describe("buildPagefindIndex", () => {
     expect(result.outputPath).toBe(join(root, "_pagefind"));
     expect(await exists(join(root, "_pagefind", "pagefind.js"))).toBe(true);
   });
+
+  it("writes Pagefind artifacts when static output is hosted under a base path", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-pagefind-"));
+    await mkdir(join(root, "guide"), { recursive: true });
+    await writeFile(join(root, "guide", "index.html"), "<html><body><main><h1>Guide</h1></main></body></html>");
+
+    const result = await buildPagefindIndex(root, { basePath: "/documentee" });
+
+    expect(result.pageCount).toBe(1);
+    expect(result.outputPath).toBe(join(root, "_pagefind"));
+    expect(await exists(join(root, "_pagefind", "pagefind.js"))).toBe(true);
+  });
 });
 
 async function exists(filePath: string): Promise<boolean> {

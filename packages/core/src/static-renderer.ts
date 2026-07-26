@@ -89,7 +89,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   const footer = layout.footer ? renderFooter(manifest, route, pageNav) : "";
   const announcement = renderAnnouncement(manifest.config.layout.announcement);
 
-  return `<!doctype html>
+  return applySiteBasePath(`<!doctype html>
 <html lang="${escapeHtml(language)}"${direction === "rtl" ? ' dir="rtl"' : ""}>
 <head>
   <meta charset="utf-8">
@@ -483,7 +483,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   ${feedbackScript}
 </body>
 </html>
-`;
+`, manifest.config.site.basePath);
 }
 
 function renderThemeCss(manifest: SiteManifest): { variables: string; customCss: string } {
@@ -1714,11 +1714,13 @@ function renderSearchAssets(manifest: SiteManifest, route: SiteRoute): { head: s
   if (manifest.config.search.provider !== "pagefind" || route.route !== "/search") {
     return { head: "", body: "" };
   }
+  const pagefindCss = hrefWithBasePath("/_pagefind/pagefind-ui.css", manifest.config.site.basePath, false);
+  const pagefindJs = hrefWithBasePath("/_pagefind/pagefind-ui.js", manifest.config.site.basePath, false);
 
   return {
-    head: '<link href="/_pagefind/pagefind-ui.css" rel="stylesheet">',
+    head: `<link href="${pagefindCss}" rel="stylesheet">`,
     body: `<script type="module">
-    import { PagefindUI } from "/_pagefind/pagefind-ui.js";
+    import { PagefindUI } from "${pagefindJs}";
     new PagefindUI({ element: "#pagefind-search", showSubResults: true });
   </script>`,
   };
@@ -1884,6 +1886,37 @@ function statusClass(status: string): string {
 function hrefForRoute(route: string): string {
   if (route === "/") return "/";
   return `${route.replace(/\/$/g, "")}/`;
+}
+
+function applySiteBasePath(html: string, basePath: string | undefined): string {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  if (!normalizedBasePath) return html;
+
+  return html.replace(/\b(href|src|action)="(\/(?!\/)[^"#?]*)([^"]*)"/g, (_match, attribute: string, pathname: string, suffix: string) => {
+    const appendTrailingSlash = attribute === "href";
+    return `${attribute}="${hrefWithBasePath(`${pathname}${suffix}`, normalizedBasePath, appendTrailingSlash)}"`;
+  });
+}
+
+function hrefWithBasePath(value: string, basePath: string | undefined, appendTrailingSlash = true): string {
+  const normalizedBasePath = normalizeBasePath(basePath);
+  if (!normalizedBasePath || !value.startsWith("/") || value.startsWith("//")) return value;
+
+  const [pathnameAndSearch, hash = ""] = value.split("#", 2);
+  const [pathname, search = ""] = pathnameAndSearch.split("?", 2);
+  if (pathname === normalizedBasePath || pathname.startsWith(`${normalizedBasePath}/`)) return value;
+  const normalizedPathname = appendTrailingSlash && pathname !== "/" && !/\.[a-z0-9]+$/i.test(pathname)
+    ? `${pathname.replace(/\/$/g, "")}/`
+    : pathname;
+  const suffix = `${search ? `?${search}` : ""}${hash ? `#${hash}` : ""}`;
+  if (normalizedPathname === "/") return `${normalizedBasePath}/${suffix}`;
+  return `${normalizedBasePath}${normalizedPathname}${suffix}`;
+}
+
+function normalizeBasePath(basePath: string | undefined): string {
+  if (!basePath) return "";
+  const normalized = `/${basePath.replace(/^\/+|\/+$/g, "")}`;
+  return normalized === "/" ? "" : normalized;
 }
 
 function routeFromPageRef(pageRef: string, contentDirectory: string): string {

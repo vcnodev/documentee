@@ -56,6 +56,23 @@ describe("loadConfig", () => {
     });
   });
 
+  it("loads an optional site base path for project-hosted static sites", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        url: "https://acme.github.io/docs",
+        basePath: "/docs",
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.site.url).toBe("https://acme.github.io/docs");
+    expect(config.site.basePath).toBe("/docs");
+  });
+
   it("loads docs.json layout settings", async () => {
     const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
     await writeFile(

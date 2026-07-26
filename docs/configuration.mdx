@@ -12,6 +12,7 @@ export default {
   site: {
     name: "Documentee",
     url: "https://documentee.dev",
+    basePath: "/documentee",
     description: "Static docs for humans and AI agents.",
   },
   content: { directory: "docs" },
@@ -26,6 +27,8 @@ export default {
   },
 };
 ```
+
+Set `site.basePath` when the site is hosted below a domain path, such as GitHub Pages project sites at `https://owner.github.io/repo`. For a user or custom-domain site hosted at the domain root, omit `basePath`.
 
 ## Content And Navigation
 

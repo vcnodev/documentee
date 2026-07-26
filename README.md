@@ -386,6 +386,8 @@ Use overrides for brand colors, typography, layout density, content width, card 
 
 The repo includes a Documentee-generated usage guide at `/get-started/use-documentee` and a GitHub Pages workflow at `.github/workflows/pages.yml`. Enable GitHub Pages with **Source: GitHub Actions**, then push to `main` or run the workflow manually to publish `dist-docs/`.
 
+For GitHub Pages project sites, set `site.basePath` to the repository path, for example `/documentee`, so generated links stay under `https://owner.github.io/repo/`.
+
 Customize the shell:
 
 ```ts

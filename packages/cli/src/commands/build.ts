@@ -22,7 +22,7 @@ export async function buildCommand(projectRoot: string, outDir: string): Promise
   await writeFile(join(resolvedOutDir, "skill.md"), renderSkillMd(manifest));
 
   if (config.search.provider === "pagefind") {
-    await buildPagefindIndex(resolvedOutDir);
+    await buildPagefindIndex(resolvedOutDir, { basePath: config.site.basePath });
   }
 }
 

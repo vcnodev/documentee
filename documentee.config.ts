@@ -1,7 +1,8 @@
 export default {
   site: {
     name: "Documentee",
-    url: "https://documentee.dev",
+    url: "https://vcnodev.github.io/documentee",
+    basePath: "/documentee",
     description: "Open-source static documentation for humans and AI agents.",
   },
   content: {
