@@ -13,6 +13,8 @@ describe("renderPlaygroundScript", () => {
     expect(script).toContain("Content-Type");
     expect(script).toContain("fetch");
     expect(script).toContain('result.dataset.state = "loading"');
+    expect(script).toContain('result.textContent = "Sending request…"');
+    expect(script).not.toContain('result.textContent = "Sending request..."');
     expect(script).toContain('result.dataset.state = response.ok ? "success" : "error"');
     expect(script).toContain('result.dataset.state = "error"');
     expect(script).toContain("response.status");

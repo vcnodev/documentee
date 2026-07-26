@@ -394,6 +394,9 @@ describe("loadConfig", () => {
           codeFontFamily: "ui-monospace",
           radius: "10px",
           navWidth: "300px",
+          contentWidth: "1040px",
+          densitySpace: "10px",
+          methodGetColor: "#22c55e",
           customCss: ".custom { color: red; }",
           darkMode: false,
         },
@@ -414,6 +417,9 @@ describe("loadConfig", () => {
       codeFontFamily: "ui-monospace",
       radius: "10px",
       navWidth: "300px",
+      contentWidth: "1040px",
+      densitySpace: "10px",
+      methodGetColor: "#22c55e",
       customCss: ".custom { color: red; }",
       darkMode: false,
     });
@@ -445,6 +451,55 @@ describe("loadConfig", () => {
     const config = await loadConfig(root);
 
     expect(config.theme.preset).toBe(preset);
+  });
+
+  it.each([
+    "minimal-technical",
+    "modern-glass",
+    "api-ide",
+    "enterprise-knowledge",
+    "premium-editorial",
+    "sci-fi-console",
+    "api-observatory",
+    "knowledge-graph",
+  ])("loads %s design system", async (designSystem) => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        theme: {
+          designSystem,
+          overrides: {
+            primaryColor: "#db2777",
+            navWidth: "340px",
+          },
+        },
+      }),
+    );
+
+    const config = await loadConfig(root);
+
+    expect(config.theme.designSystem).toBe(designSystem);
+    expect(config.theme.overrides).toMatchObject({
+      primaryColor: "#db2777",
+      navWidth: "340px",
+    });
+  });
+
+  it("rejects unknown design systems", async () => {
+    const root = await mkdtemp(join(tmpdir(), "documentee-config-"));
+    await writeFile(
+      join(root, "docs.json"),
+      JSON.stringify({
+        name: "Acme Docs",
+        theme: {
+          designSystem: "ocean-lab",
+        },
+      }),
+    );
+
+    await expect(loadConfig(root)).rejects.toThrow("Invalid enum value");
   });
 
   it("rejects unknown theme presets", async () => {

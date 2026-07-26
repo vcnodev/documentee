@@ -26,7 +26,7 @@ export function renderPlaygroundScript(): string {
       const submit = form.querySelector("[data-playground-submit]");
       if (!result) return;
 
-      result.textContent = "Sending request...";
+      result.textContent = "Sending request…";
       result.dataset.state = "loading";
       if (responseHeadersOutput) responseHeadersOutput.textContent = "";
       if (responseBodyOutput) responseBodyOutput.textContent = "";

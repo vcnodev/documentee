@@ -362,19 +362,29 @@ It prints a Markdown report with added operations, removed operations, request f
 
 ## Theme And Layout
 
-Choose a preset:
+Choose a design system and layer local overrides on top:
 
 ```ts
 theme: {
-  preset: "api",
-  primaryColor: "#2563eb",
-  navWidth: "300px",
-  radius: "8px",
+  designSystem: "api-ide",
+  overrides: {
+    primaryColor: "#2563eb",
+    navWidth: "300px",
+    radius: "8px",
+    contentWidth: "1040px",
+    methodGetColor: "#22c55e",
+  },
   darkMode: true,
 }
 ```
 
-Available presets are `neutral`, `mint`, `slate`, `highContrast`, `classic`, `terminal`, `startup`, `enterprise`, `api`, and `minimal`.
+Available design systems are `minimal-technical`, `modern-glass`, `api-ide`, `enterprise-knowledge`, `premium-editorial`, `sci-fi-console`, `api-observatory`, and `knowledge-graph`. Existing flat theme tokens and `theme.preset` are still accepted for migration compatibility.
+
+Use overrides for brand colors, typography, layout density, content width, card radius, shadows, API method colors, and `customCss`.
+
+## Publish The Dogfood Docs
+
+The repo includes a Documentee-generated usage guide at `/get-started/use-documentee` and a GitHub Pages workflow at `.github/workflows/pages.yml`. Enable GitHub Pages with **Source: GitHub Actions**, then push to `main` or run the workflow manually to publish `dist-docs/`.
 
 Customize the shell:
 

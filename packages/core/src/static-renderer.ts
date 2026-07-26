@@ -5,6 +5,7 @@ import { routeToOutputPath } from "./paths.js";
 import { renderPlaygroundScript } from "./playground.js";
 import { applyHtmlPlugins } from "./plugins.js";
 import { getRedirects, getSeoConfig, renderRedirectHtml, renderRedirectsFile, renderRobotsTxt, renderSeoHead, renderSitemapXml, renderVercelRedirectsJson } from "./seo.js";
+import { resolveThemeCustomCss, resolveThemeTokens } from "./theme.js";
 import type { SiteManifest, SiteRoute, VersionReference } from "./manifest.js";
 import type { DocumenteeConfig } from "./config.js";
 
@@ -99,29 +100,31 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
   <style>
     ${theme.variables}
     * { box-sizing: border-box; }
-    body { background: color-mix(in srgb, var(--doc-background) 94%, var(--doc-border)); color: var(--doc-text); font-family: var(--doc-font-family); margin: 0; min-height: 100vh; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--doc-page-background); color: var(--doc-text); font-family: var(--doc-font-family); font-size: var(--doc-body-font-size); margin: 0; min-height: 100vh; }
     .skip-link { background: var(--doc-text); border-radius: var(--doc-radius); color: var(--doc-background); font-weight: 800; left: 16px; padding: 9px 12px; position: fixed; text-decoration: none; top: 16px; transform: translateY(-140%); transition: transform 120ms ease; z-index: 20; }
     .skip-link:focus { transform: translateY(0); }
-    :where(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid color-mix(in srgb, var(--doc-primary) 70%, white); outline-offset: 3px; }
+    :where(a, button, input, select, textarea, summary) { touch-action: manipulation; }
+    :where(a, button, input, select, textarea, summary):focus-visible { outline: 3px solid var(--doc-focus-ring); outline-offset: 3px; }
     .doc-shell { display: grid; grid-template-columns: var(--doc-nav-width) minmax(0, 1fr); }
-    .doc-sidebar { align-self: start; background: color-mix(in srgb, var(--doc-background) 94%, var(--doc-border)); border-right: 1px solid var(--doc-border); display: flex; flex-direction: column; gap: 18px; height: 100vh; min-height: 100vh; overflow-y: auto; padding: 22px; position: sticky; top: 0; }
+    .doc-sidebar { align-self: start; background: var(--doc-sidebar-background); border-right: 1px solid var(--doc-border); display: flex; flex-direction: column; gap: calc(var(--doc-density-space) + 4px); height: 100vh; min-height: 100vh; overflow-y: auto; padding: calc(var(--doc-density-space) + 8px); position: sticky; top: 0; }
     [dir="rtl"] .doc-sidebar { border-left: 1px solid var(--doc-border); border-right: 0; }
     .doc-mobile-header { display: none; }
     .doc-brand { color: inherit; display: grid; gap: 4px; font-weight: 800; text-decoration: none; }
     .doc-brand span { color: var(--doc-muted-text); font-size: 13px; font-weight: 500; }
-    .doc-search-link { align-items: center; border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: var(--doc-muted-text); display: flex; font-size: 14px; gap: 12px; justify-content: space-between; padding: 10px 12px; text-decoration: none; }
+    .doc-search-link { align-items: center; border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: var(--doc-muted-text); display: flex; font-size: 14px; gap: 12px; justify-content: space-between; min-height: 44px; padding: 10px 12px; text-decoration: none; }
     .doc-search-shortcut { align-items: center; display: inline-flex; flex: 0 0 auto; gap: 3px; }
     .doc-search-shortcut kbd, .search-shortcut-hint kbd { background: color-mix(in srgb, var(--doc-background) 88%, var(--doc-border)); border: 1px solid var(--doc-border); border-radius: 4px; color: var(--doc-muted-text); font: 700 11px/1 var(--doc-code-font-family); padding: 3px 5px; }
     .locale-switcher { display: grid; gap: 6px; }
     .locale-switcher span { color: var(--doc-muted-text); font-size: 11px; font-weight: 800; text-transform: uppercase; }
     .locale-switcher-links { display: flex; flex-wrap: wrap; gap: 6px; }
-    .locale-switcher a { border: 1px solid var(--doc-border); border-radius: 999px; color: var(--doc-muted-text); font-size: 12px; font-weight: 800; padding: 5px 8px; text-decoration: none; }
+    .locale-switcher a { align-items: center; border: 1px solid var(--doc-border); border-radius: 999px; color: var(--doc-muted-text); display: inline-flex; font-size: 12px; font-weight: 800; min-height: 32px; padding: 5px 8px; text-decoration: none; }
     .locale-switcher a:hover, .locale-switcher a.is-active { background: color-mix(in srgb, var(--doc-primary) 10%, transparent); color: var(--doc-primary); }
-    .nav-group { display: grid; gap: 6px; }
+    .nav-group { display: grid; gap: calc(var(--doc-density-space) / 2); }
     .nav-group > span, .version-switcher > span, .nav-subgroup-header span:first-child { color: var(--doc-muted-text); font-size: 11px; font-weight: 800; text-transform: uppercase; }
-    .nav-link, .version-switcher a { border-radius: calc(var(--doc-radius) - 2px); color: var(--doc-muted-text); display: block; font-size: 14px; line-height: 1.35; padding: 7px 9px; text-decoration: none; }
+    .nav-link, .version-switcher a { align-items: center; border-radius: calc(var(--doc-radius) - 2px); color: var(--doc-muted-text); display: flex; font-size: 14px; line-height: 1.35; min-height: 44px; padding: 7px 9px; text-decoration: none; }
     .nav-link:hover, .version-switcher a:hover, .doc-search-link:hover { background: color-mix(in srgb, var(--doc-primary) 9%, transparent); color: var(--doc-text); }
-    .nav-link.is-active { background: color-mix(in srgb, var(--doc-primary) 12%, transparent); color: var(--doc-primary); font-weight: 800; }
+    .nav-link.is-active { background: var(--doc-active-background); color: var(--doc-link); font-weight: 800; }
     .nav-subgroup { border-top: 1px solid color-mix(in srgb, var(--doc-border) 52%, transparent); display: grid; gap: 4px; margin-top: 6px; padding-top: 10px; }
     .nav-subgroup summary { cursor: pointer; list-style: none; }
     .nav-subgroup summary::-webkit-details-marker { display: none; }
@@ -129,12 +132,12 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .nav-subgroup-header { align-items: baseline; display: flex; gap: 8px; justify-content: space-between; margin-bottom: 4px; }
     .nav-subgroup-count { color: var(--doc-muted-text); font-size: 11px; font-weight: 600; text-transform: none; white-space: nowrap; }
     .api-nav-filter { display: grid; gap: 8px; margin-bottom: 8px; }
-    .api-nav-filter input { background: color-mix(in srgb, var(--doc-background) 92%, var(--doc-border)); border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: var(--doc-text); font: inherit; font-size: 13px; padding: 8px 10px; width: 100%; }
+    .api-nav-filter input { background: color-mix(in srgb, var(--doc-background) 92%, var(--doc-border)); border: 1px solid var(--doc-border); border-radius: var(--doc-radius); color: var(--doc-text); font: inherit; font-size: 13px; min-height: 44px; padding: 8px 10px; width: 100%; }
     .api-nav-empty { color: var(--doc-muted-text); display: none; font-size: 13px; margin: 0; }
     .api-nav-link { display: grid; gap: 3px; grid-template-columns: auto minmax(0, 1fr); }
     .api-nav-link .nav-method { font-family: var(--doc-code-font-family); font-size: 11px; font-weight: 900; }
     .api-nav-link .nav-path { overflow-wrap: anywhere; }
-    .doc-main { background: color-mix(in srgb, var(--doc-background) 98%, white); min-width: 0; }
+    .doc-main { background: var(--doc-page-background); min-width: 0; }
     .doc-announcement { background: color-mix(in srgb, var(--doc-primary) 12%, var(--doc-background)); border-bottom: 1px solid color-mix(in srgb, var(--doc-primary) 24%, var(--doc-border)); color: var(--doc-text); font-size: 14px; font-weight: 700; padding: 11px clamp(20px, 5vw, 56px); }
     .doc-topbar { align-items: center; border-bottom: 1px solid var(--doc-border); display: flex; justify-content: space-between; min-height: 58px; padding: 0 clamp(20px, 5vw, 56px); }
     .doc-topbar span { color: var(--doc-muted-text); font-size: 13px; }
@@ -143,14 +146,14 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-breadcrumbs a:hover { color: var(--doc-primary); }
     .doc-breadcrumbs .doc-breadcrumb-current, .doc-breadcrumbs span:last-child { color: var(--doc-text); font-weight: 700; overflow-wrap: anywhere; }
     .doc-breadcrumb-separator { color: var(--doc-muted-text); font-size: 12px; }
-    .doc-content-frame { max-width: 920px; padding: 42px clamp(20px, 5vw, 56px) 72px; }
+    .doc-content-frame { max-width: var(--doc-content-width); padding: 42px clamp(20px, 5vw, 56px) 72px; }
     .doc-content-frame.api-doc-content { max-width: 1260px; }
-    .doc-content { background: var(--doc-background); border: 1px solid color-mix(in srgb, var(--doc-border) 70%, transparent); border-radius: min(var(--doc-radius), 8px); box-shadow: 0 18px 48px rgb(15 23 42 / 6%); padding: clamp(24px, 4vw, 44px); }
-    .doc-content h1 { font-size: clamp(36px, 4.8vw, 58px); letter-spacing: 0; line-height: 1.02; margin: 0 0 18px; }
-    .doc-content h2 { border-top: 1px solid var(--doc-border); font-size: clamp(24px, 2.4vw, 31px); letter-spacing: 0; line-height: 1.18; margin: 40px 0 14px; padding-top: 30px; }
-    .doc-content h3 { font-size: 20px; letter-spacing: 0; line-height: 1.28; margin: 28px 0 10px; }
+    .doc-content { background: var(--doc-surface); border: 1px solid color-mix(in srgb, var(--doc-border) 70%, transparent); border-radius: var(--doc-card-radius); box-shadow: var(--doc-shadow-card); padding: var(--doc-content-padding); }
+    .doc-content h1 { font-size: var(--doc-h1-size); font-weight: var(--doc-heading-weight); letter-spacing: 0; line-height: 1.02; margin: 0 0 calc(var(--doc-density-space) + 4px); }
+    .doc-content h2 { border-top: 1px solid var(--doc-border); font-size: var(--doc-h2-size); font-weight: var(--doc-heading-weight); letter-spacing: 0; line-height: 1.18; margin: calc(var(--doc-density-space) * 3) 0 var(--doc-density-space); padding-top: calc(var(--doc-density-space) * 2); }
+    .doc-content h3 { font-size: 20px; font-weight: var(--doc-heading-weight); letter-spacing: 0; line-height: 1.28; margin: calc(var(--doc-density-space) * 2) 0 10px; }
     .doc-content :where(h2, h3) { scroll-margin-top: 82px; }
-    .doc-heading-anchor { color: var(--doc-muted-text); margin-right: 8px; opacity: 0; text-decoration: none; }
+    .doc-heading-anchor { align-items: center; color: var(--doc-muted-text); display: inline-flex; justify-content: center; margin-right: 8px; min-height: 44px; min-width: 32px; opacity: 0; text-decoration: none; }
     .doc-content :where(h2, h3):hover .doc-heading-anchor, .doc-heading-anchor:focus-visible { opacity: 1; }
     .doc-on-this-page { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); display: none; margin: 0 0 24px; }
     .doc-on-this-page-inline { display: block; }
@@ -162,8 +165,8 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-page-toc a, .doc-on-this-page a { color: var(--doc-muted-text); font-size: 13px; line-height: 1.35; text-decoration: none; }
     .doc-page-toc a:hover, .doc-on-this-page a:hover { color: var(--doc-primary); }
     .doc-page-toc .toc-level-3, .doc-on-this-page .toc-level-3 { padding-left: 12px; }
-    .doc-content > h1 + p { color: var(--doc-muted-text); font-size: 1.16rem; line-height: 1.72; margin-bottom: 28px; }
-    .doc-content p, .doc-content li { line-height: 1.72; }
+    .doc-content > h1 + p { color: var(--doc-muted-text); font-size: calc(var(--doc-body-font-size) * 1.16); line-height: var(--doc-line-height); margin-bottom: calc(var(--doc-density-space) * 2); }
+    .doc-content p, .doc-content li { font-size: var(--doc-body-font-size); line-height: var(--doc-line-height); }
     .doc-content table { border-collapse: collapse; display: block; margin: 18px 0; overflow-x: auto; width: 100%; }
     .doc-content td, .doc-content th { border-bottom: 1px solid var(--doc-border); padding: 10px 12px; text-align: left; }
     code, pre { background: var(--doc-code-background); font-family: var(--doc-code-font-family); }
@@ -171,7 +174,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-code-copy { display: grid; gap: 0; margin: 18px 0; position: relative; }
     .doc-code-copy pre { margin: 0; }
     .doc-code-copy figcaption, .doc-code-block figcaption, .doc-pre figcaption, .doc-snippet figcaption { align-items: center; display: flex; justify-content: space-between; }
-    .doc-copy-button { align-self: start; background: color-mix(in srgb, var(--doc-background) 88%, var(--doc-border)); border: 1px solid var(--doc-border); border-radius: 6px; color: var(--doc-muted-text); cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; justify-self: end; margin: 8px 8px -32px 0; padding: 5px 8px; position: relative; z-index: 1; }
+    .doc-copy-button { align-self: start; background: color-mix(in srgb, var(--doc-background) 88%, var(--doc-border)); border: 1px solid var(--doc-border); border-radius: 6px; color: var(--doc-muted-text); cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; justify-self: end; margin: 8px 8px -32px 0; min-height: 44px; padding: 5px 10px; position: relative; z-index: 1; }
     .doc-copy-button:hover { color: var(--doc-text); }
     .doc-footer { border-top: 1px solid var(--doc-border); color: var(--doc-muted-text); display: grid; gap: 18px; margin-top: 34px; padding-top: 18px; }
     .doc-footer-meta { align-items: center; display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 13px; }
@@ -183,18 +186,22 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-page-nav a:hover { border-color: color-mix(in srgb, var(--doc-primary) 45%, var(--doc-border)); }
     .doc-page-nav span { color: var(--doc-muted-text); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .method { border: 1px solid color-mix(in srgb, var(--doc-primary) 28%, var(--doc-border)); border-radius: 999px; color: var(--doc-primary); display: inline-flex; font-size: 13px; font-weight: 800; padding: 5px 9px; vertical-align: middle; }
-    .method-get { --method-color: #2563eb; }
-    .method-post { --method-color: #16a34a; }
-    .method-put, .method-patch { --method-color: #d97706; }
-    .method-delete { --method-color: #dc2626; }
-    .method-options, .method-head, .method-trace { --method-color: #7c3aed; }
+    .method-get { --method-color: var(--doc-method-get); }
+    .method-post { --method-color: var(--doc-method-post); }
+    .method-put { --method-color: var(--doc-method-put); }
+    .method-patch { --method-color: var(--doc-method-patch); }
+    .method-delete { --method-color: var(--doc-method-delete); }
+    .method-options { --method-color: var(--doc-method-options); }
+    .method-head { --method-color: var(--doc-method-head); }
+    .method-trace { --method-color: var(--doc-method-trace); }
     .method-get .method, .method.method-get, .method-get .nav-method { color: var(--method-color); }
     .method-post .method, .method.method-post, .method-post .nav-method { color: var(--method-color); }
     .method-put .method, .method.method-put, .method-put .nav-method, .method-patch .method, .method.method-patch, .method-patch .nav-method { color: var(--method-color); }
     .method-delete .method, .method.method-delete, .method-delete .nav-method { color: var(--method-color); }
     .method-options .method, .method.method-options, .method-options .nav-method, .method-head .method, .method.method-head, .method-head .nav-method, .method-trace .method, .method.method-trace, .method-trace .nav-method { color: var(--method-color); }
     .path { color: var(--doc-muted-text); font-family: var(--doc-code-font-family); font-size: 0.88em; overflow-wrap: anywhere; }
-    a { color: var(--doc-primary); }
+    a { color: var(--doc-link); }
+    a:hover { color: var(--doc-link-hover); }
     .doc-badge, .badge { border: 1px solid var(--doc-border); border-radius: 999px; display: inline-flex; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 8px; }
     .doc-badge-success { border-color: var(--doc-success); color: var(--doc-success-text); }
     .doc-badge-warning { border-color: var(--doc-warning); color: var(--doc-warning-text); }
@@ -204,8 +211,8 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .doc-card-group-1 { grid-template-columns: 1fr; }
     .doc-card-group-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .doc-card-group-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .doc-card, .doc-card-list-item { background: color-mix(in srgb, var(--doc-background) 96%, var(--doc-border)); border: 1px solid color-mix(in srgb, var(--doc-border) 78%, transparent); border-radius: min(var(--doc-radius), 8px); color: inherit; display: flex; gap: 12px; padding: 16px; text-decoration: none; transition: background 140ms ease, border-color 140ms ease, transform 140ms ease; }
-    .doc-card:hover, .doc-card-list-item:hover { background: color-mix(in srgb, var(--doc-primary) 7%, var(--doc-background)); border-color: color-mix(in srgb, var(--doc-primary) 34%, var(--doc-border)); transform: translateY(-1px); }
+    .doc-card, .doc-card-list-item { background: var(--doc-surface-raised); border: 1px solid var(--doc-card-border); border-radius: var(--doc-card-radius); box-shadow: var(--doc-shadow-card); color: inherit; display: flex; gap: var(--doc-density-space); min-height: 112px; padding: var(--doc-density-space); text-decoration: none; transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease; }
+    .doc-card:hover, .doc-card-list-item:hover { background: color-mix(in srgb, var(--doc-primary) 7%, var(--doc-background)); border-color: color-mix(in srgb, var(--doc-primary) 34%, var(--doc-border)); box-shadow: var(--doc-shadow-raised); transform: translateY(-1px); }
     .doc-card h3 { font-size: 16px; margin: 0 0 6px; }
     .doc-card p { color: var(--doc-muted-text); margin: 0; }
     .doc-card-icon { flex: 0 0 auto; }
@@ -282,7 +289,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .api-portal-stats, .api-portal-tags, .api-chip-row, .api-meta-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .api-portal-stats span, .api-portal-tags span, .api-chip, .api-tag, .api-auth { border: 1px solid color-mix(in srgb, var(--doc-border) 72%, transparent); border-radius: 999px; color: var(--doc-muted-text); font-size: 12px; font-weight: 700; padding: 5px 9px; }
     .api-operation { display: grid; gap: 22px; }
-    .api-hero { background: color-mix(in srgb, var(--doc-background) 94%, var(--method-color, var(--doc-primary))); border: 1px solid color-mix(in srgb, var(--method-color, var(--doc-primary)) 28%, var(--doc-border)); border-radius: var(--doc-radius); display: grid; gap: 13px; padding: clamp(18px, 3vw, 28px); }
+    .api-hero { background: var(--doc-hero-background); border: 1px solid color-mix(in srgb, var(--method-color, var(--doc-primary)) 28%, var(--doc-border)); border-radius: var(--doc-card-radius); display: grid; gap: var(--doc-density-space); padding: clamp(18px, 3vw, 28px); }
     .api-hero h1 { margin-bottom: 0; }
     .api-hero p { margin: 0; }
     .api-hero .api-description { color: var(--doc-muted-text); }
@@ -292,7 +299,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .api-operation-main { display: grid; gap: 16px; min-width: 0; }
     .api-operation-rail { display: grid; gap: 14px; position: sticky; top: 80px; }
     .api-overview-grid { display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .api-overview-item, .api-rail-card, .api-panel-card { background: color-mix(in srgb, var(--doc-background) 98%, var(--doc-border)); border: 1px solid color-mix(in srgb, var(--doc-border) 68%, transparent); border-radius: var(--doc-radius); }
+    .api-overview-item, .api-rail-card, .api-panel-card { background: var(--doc-panel-background); border: 1px solid var(--doc-card-border); border-radius: var(--doc-card-radius); box-shadow: var(--doc-shadow-card); }
     .api-overview-item { display: grid; gap: 4px; min-width: 0; padding: 12px; }
     .api-overview-label, .api-section-eyebrow, .api-rail-label { color: var(--doc-muted-text); font-size: 11px; font-weight: 900; text-transform: uppercase; }
     .api-overview-value, .api-rail-value { font-family: var(--doc-code-font-family); font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
@@ -363,7 +370,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     .api-playground-preview pre, .api-playground-output pre { min-height: 72px; white-space: pre-wrap; }
     .api-playground-response-grid { display: grid; gap: 10px; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); }
     .search-panel { display: grid; gap: 22px; }
-    .search-hero { background: color-mix(in srgb, var(--doc-primary) 7%, var(--doc-background)); border: 1px solid color-mix(in srgb, var(--doc-primary) 22%, var(--doc-border)); border-radius: min(var(--doc-radius), 8px); display: grid; gap: 16px; padding: clamp(18px, 3vw, 28px); }
+    .search-hero { background: var(--doc-hero-background); border: 1px solid color-mix(in srgb, var(--doc-primary) 22%, var(--doc-border)); border-radius: var(--doc-card-radius); display: grid; gap: var(--doc-density-space); padding: clamp(18px, 3vw, 28px); }
     .search-hero h1 { margin-bottom: 0; }
     .search-hero p { color: var(--doc-muted-text); font-size: 1.04rem; line-height: 1.65; margin: 0; }
     .search-stat-grid { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -414,7 +421,7 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
     @media (max-width: 820px) {
       .doc-shell { display: block; }
       .doc-sidebar { display: none; }
-      .doc-mobile-header { align-items: center; background: color-mix(in srgb, var(--doc-background) 94%, var(--doc-border)); border-bottom: 1px solid var(--doc-border); display: flex; gap: 12px; justify-content: space-between; min-height: 56px; padding: 10px 20px; position: sticky; top: 0; z-index: 12; }
+      .doc-mobile-header { align-items: center; background: color-mix(in srgb, var(--doc-background) 94%, var(--doc-border)); border-bottom: 1px solid var(--doc-border); display: flex; gap: 12px; justify-content: space-between; min-height: calc(56px + env(safe-area-inset-top)); padding: calc(10px + env(safe-area-inset-top)) 20px 10px; position: sticky; top: 0; z-index: 12; }
       .doc-mobile-brand { color: inherit; font-weight: 800; text-decoration: none; }
       .doc-mobile-actions { align-items: center; display: flex; gap: 8px; }
       .doc-mobile-header .doc-search-link { font-size: 0; gap: 8px; padding: 8px 10px; }
@@ -423,10 +430,10 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
       .doc-mobile-header .doc-search-shortcut { font-size: 12px; }
       .search-stat-grid { grid-template-columns: 1fr; }
       .doc-mobile-menu { position: relative; }
-      .doc-mobile-menu summary { border: 1px solid var(--doc-border); border-radius: var(--doc-radius); cursor: pointer; font-weight: 800; list-style: none; padding: 8px 10px; }
+      .doc-mobile-menu summary { align-items: center; border: 1px solid var(--doc-border); border-radius: var(--doc-radius); cursor: pointer; display: flex; font-weight: 800; list-style: none; min-height: 44px; padding: 8px 10px; }
       .doc-mobile-menu summary::-webkit-details-marker { display: none; }
       .doc-mobile-menu[open] .doc-mobile-nav { display: grid; }
-      .doc-mobile-nav { background: var(--doc-background); border: 1px solid var(--doc-border); border-radius: var(--doc-radius); box-shadow: 0 20px 60px rgb(0 0 0 / 24%); display: none; gap: 16px; max-height: min(70vh, 520px); min-width: min(340px, calc(100vw - 40px)); overflow: auto; padding: 16px; position: absolute; right: 0; top: calc(100% + 8px); }
+      .doc-mobile-nav { background: var(--doc-background); border: 1px solid var(--doc-border); border-radius: var(--doc-radius); box-shadow: 0 20px 60px rgb(0 0 0 / 24%); display: none; gap: 16px; inset: calc(56px + env(safe-area-inset-top)) 16px auto 16px; max-height: min(72dvh, 560px); overflow: auto; padding: 16px; position: fixed; }
       .doc-topbar { min-height: 48px; }
       .doc-content-frame { padding-top: 28px; }
       .doc-content { border-left: 0; border-radius: 0; border-right: 0; margin-left: calc(clamp(20px, 5vw, 56px) * -1); margin-right: calc(clamp(20px, 5vw, 56px) * -1); padding-left: clamp(20px, 5vw, 56px); padding-right: clamp(20px, 5vw, 56px); }
@@ -435,6 +442,10 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
       .doc-card-group-2, .doc-card-group-3, .doc-columns-2, .doc-columns-3, .doc-feature-grid, .doc-feature-grid-3 { grid-template-columns: 1fr; }
       .api-portal-card-head, .api-section-heading { align-items: start; flex-direction: column; }
       .api-overview-grid { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
     }
     ${theme.customCss}
   </style>
@@ -477,10 +488,9 @@ export function renderRoute(manifest: SiteManifest, route: SiteRoute): string {
 
 function renderThemeCss(manifest: SiteManifest): { variables: string; customCss: string } {
   const theme = manifest.config.theme;
-  const preset = theme.preset ? themePresets[theme.preset] : {};
   const darkMode = theme.darkMode ? "light dark" : "light";
-  const values = themeValues(theme, preset, "light");
-  const darkValues = themeValues(theme, preset, "dark");
+  const values = resolveThemeTokens(theme, "light");
+  const darkValues = resolveThemeTokens(theme, "dark");
   const variables = [
     `:root { color-scheme: ${cssValue(darkMode)}; font-family: var(--doc-font-family);`,
     ...Object.entries(values).map(([name, value]) => `      ${name}: ${cssValue(value)};`),
@@ -496,7 +506,7 @@ function renderThemeCss(manifest: SiteManifest): { variables: string; customCss:
 
   return {
     variables,
-    customCss: theme.customCss ? sanitizeStyleText(theme.customCss) : "",
+    customCss: resolveThemeCustomCss(theme),
   };
 }
 
@@ -508,7 +518,7 @@ function renderAssistant(manifest: SiteManifest, route: SiteRoute): string {
   <h2>Ask Docs</h2>
   <p>Send this page context to your configured docs assistant.</p>
   <form data-assistant-form>
-    <textarea name="query" required placeholder="Ask about ${escapeHtml(route.title)}" aria-label="Ask docs question"></textarea>
+    <textarea name="query" required autocomplete="off" placeholder="Ask about ${escapeHtml(route.title)}…" aria-label="Ask docs question"></textarea>
     <button type="submit">Ask</button>
   </form>
   <pre class="doc-assistant-output" data-assistant-output aria-live="polite"></pre>
@@ -542,7 +552,7 @@ function renderAssistantScript(): string {
       if (!query) return;
 
       output.dataset.state = "loading";
-      output.textContent = "Asking docs...";
+      output.textContent = "Asking docs…";
       if (button) button.disabled = true;
 
       try {
@@ -583,7 +593,7 @@ function renderFeedback(manifest: SiteManifest, route: SiteRoute): string {
     </div>
     <label>
       <span>Optional comment</span>
-      <textarea name="comment" placeholder="What should we improve?" aria-label="Optional feedback comment"></textarea>
+      <textarea name="comment" autocomplete="off" placeholder="What should we improve?…" aria-label="Optional feedback comment"></textarea>
     </label>
   </form>
   <p class="doc-feedback-status" data-feedback-status aria-live="polite"></p>
@@ -954,224 +964,6 @@ function renderMobileHeader(manifest: SiteManifest, versions: string, localeSwit
 </header>`;
 }
 
-type ThemeConfig = DocumenteeConfig["theme"];
-type ThemePresetTokens = Partial<Omit<ThemeConfig, "preset" | "customCss" | "darkMode">>;
-type ThemePreset = ThemePresetTokens & {
-  dark?: ThemePresetTokens;
-};
-
-const themePresets: Record<NonNullable<ThemeConfig["preset"]>, ThemePreset> = {
-  neutral: {
-    primaryColor: "#18181b",
-    accentColor: "#52525b",
-    backgroundColor: "#ffffff",
-    textColor: "#18181b",
-    mutedTextColor: "#71717a",
-    borderColor: "#d4d4d8",
-    codeBackgroundColor: "#f4f4f5",
-    dark: {
-      backgroundColor: "#111113",
-      textColor: "#f4f4f5",
-      mutedTextColor: "#a1a1aa",
-      borderColor: "#3f3f46",
-      codeBackgroundColor: "#18181b",
-    },
-  },
-  mint: {
-    primaryColor: "#0f766e",
-    accentColor: "#14b8a6",
-    backgroundColor: "#f8fffc",
-    textColor: "#10201c",
-    mutedTextColor: "#4b635d",
-    borderColor: "#b7d8ce",
-    codeBackgroundColor: "#ecfdf5",
-    dark: {
-      primaryColor: "#5eead4",
-      accentColor: "#2dd4bf",
-      backgroundColor: "#061f1a",
-      textColor: "#eafff8",
-      mutedTextColor: "#9fd6ca",
-      borderColor: "#1f4d43",
-      codeBackgroundColor: "#082f29",
-    },
-  },
-  slate: {
-    primaryColor: "#334155",
-    accentColor: "#2563eb",
-    backgroundColor: "#f8fafc",
-    textColor: "#0f172a",
-    mutedTextColor: "#64748b",
-    borderColor: "#cbd5e1",
-    codeBackgroundColor: "#f1f5f9",
-    dark: {
-      primaryColor: "#93c5fd",
-      accentColor: "#38bdf8",
-      backgroundColor: "#0f172a",
-      textColor: "#f8fafc",
-      mutedTextColor: "#cbd5e1",
-      borderColor: "#334155",
-      codeBackgroundColor: "#111827",
-    },
-  },
-  highContrast: {
-    primaryColor: "#000000",
-    accentColor: "#1d4ed8",
-    backgroundColor: "#ffffff",
-    textColor: "#000000",
-    mutedTextColor: "#1f2937",
-    borderColor: "#000000",
-    codeBackgroundColor: "#f3f4f6",
-    dark: {
-      primaryColor: "#ffffff",
-      accentColor: "#facc15",
-      backgroundColor: "#000000",
-      textColor: "#ffffff",
-      mutedTextColor: "#f5f5f5",
-      borderColor: "#ffffff",
-      codeBackgroundColor: "#111111",
-    },
-  },
-  classic: {
-    primaryColor: "#7f1d1d",
-    accentColor: "#1f4f46",
-    backgroundColor: "#fffdfa",
-    textColor: "#251714",
-    mutedTextColor: "#6b5b55",
-    borderColor: "#d8c7b8",
-    codeBackgroundColor: "#f6f0e8",
-    fontFamily: "Georgia, ui-serif, serif",
-    dark: {
-      primaryColor: "#fca5a5",
-      accentColor: "#7dd3c7",
-      backgroundColor: "#211916",
-      textColor: "#fff7ed",
-      mutedTextColor: "#d8c7b8",
-      borderColor: "#6b5046",
-      codeBackgroundColor: "#2b211d",
-    },
-  },
-  terminal: {
-    primaryColor: "#047857",
-    accentColor: "#ca8a04",
-    backgroundColor: "#fbfdf8",
-    textColor: "#101510",
-    mutedTextColor: "#4b604f",
-    borderColor: "#b9d8bf",
-    codeBackgroundColor: "#eef8ee",
-    fontFamily: "IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-    dark: {
-      primaryColor: "#34d399",
-      accentColor: "#fbbf24",
-      backgroundColor: "#050806",
-      textColor: "#d1fae5",
-      mutedTextColor: "#86efac",
-      borderColor: "#14532d",
-      codeBackgroundColor: "#07120b",
-    },
-  },
-  startup: {
-    primaryColor: "#e11d48",
-    accentColor: "#2563eb",
-    backgroundColor: "#fff8f7",
-    textColor: "#27121a",
-    mutedTextColor: "#75505e",
-    borderColor: "#f5c4ce",
-    codeBackgroundColor: "#fff1f2",
-    dark: {
-      primaryColor: "#fb7185",
-      accentColor: "#93c5fd",
-      backgroundColor: "#1f1020",
-      textColor: "#fff1f5",
-      mutedTextColor: "#f0a9bd",
-      borderColor: "#5b2744",
-      codeBackgroundColor: "#2a1429",
-    },
-  },
-  enterprise: {
-    primaryColor: "#1d4ed8",
-    accentColor: "#0f766e",
-    backgroundColor: "#f7fbff",
-    textColor: "#0c1a2e",
-    mutedTextColor: "#4b647f",
-    borderColor: "#bfd3ea",
-    codeBackgroundColor: "#edf4ff",
-    dark: {
-      primaryColor: "#60a5fa",
-      accentColor: "#5eead4",
-      backgroundColor: "#081424",
-      textColor: "#eff6ff",
-      mutedTextColor: "#b7cbe2",
-      borderColor: "#29415f",
-      codeBackgroundColor: "#0c1b2e",
-    },
-  },
-  api: {
-    primaryColor: "#0e7490",
-    accentColor: "#7c3aed",
-    backgroundColor: "#f7fdff",
-    textColor: "#0b1b22",
-    mutedTextColor: "#4b626b",
-    borderColor: "#b8dbe5",
-    codeBackgroundColor: "#ecfeff",
-    dark: {
-      primaryColor: "#67e8f9",
-      accentColor: "#c4b5fd",
-      backgroundColor: "#061923",
-      textColor: "#ecfeff",
-      mutedTextColor: "#a5d8e6",
-      borderColor: "#164e63",
-      codeBackgroundColor: "#082532",
-    },
-  },
-  minimal: {
-    primaryColor: "#111827",
-    accentColor: "#6b7280",
-    backgroundColor: "#ffffff",
-    textColor: "#111827",
-    mutedTextColor: "#6b7280",
-    borderColor: "#e5e7eb",
-    codeBackgroundColor: "#f9fafb",
-    radius: "4px",
-    dark: {
-      primaryColor: "#fafafa",
-      accentColor: "#a3a3a3",
-      backgroundColor: "#0a0a0a",
-      textColor: "#fafafa",
-      mutedTextColor: "#a3a3a3",
-      borderColor: "#2a2a2a",
-      codeBackgroundColor: "#141414",
-    },
-  },
-};
-
-function themeValues(theme: ThemeConfig, preset: ThemePreset, mode: "light" | "dark"): Record<string, string> {
-  const modePreset: ThemePresetTokens = mode === "dark" ? { ...preset, ...preset.dark } : preset;
-  const primary = theme.primaryColor ?? modePreset.primaryColor ?? "#18181b";
-  const accent = theme.accentColor ?? modePreset.accentColor ?? primary;
-
-  return {
-    "--doc-primary": primary,
-    "--doc-accent": accent,
-    "--doc-background": theme.backgroundColor ?? modePreset.backgroundColor ?? (mode === "dark" ? "#0b1020" : "Canvas"),
-    "--doc-text": theme.textColor ?? modePreset.textColor ?? (mode === "dark" ? "#f8fafc" : "CanvasText"),
-    "--doc-muted-text": theme.mutedTextColor ?? modePreset.mutedTextColor ?? (mode === "dark" ? "#a8b3c7" : "#52525b"),
-    "--doc-border": theme.borderColor ?? modePreset.borderColor ?? (mode === "dark" ? "#263244" : "#d4d4d8"),
-    "--doc-code-background": theme.codeBackgroundColor ?? modePreset.codeBackgroundColor ?? (mode === "dark" ? "#111827" : "transparent"),
-    "--doc-font-family": theme.fontFamily ?? modePreset.fontFamily ?? "Inter, ui-sans-serif, system-ui, sans-serif",
-    "--doc-code-font-family": theme.codeFontFamily ?? modePreset.codeFontFamily ?? "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-    "--doc-radius": theme.radius ?? modePreset.radius ?? "8px",
-    "--doc-nav-width": theme.navWidth ?? modePreset.navWidth ?? "280px",
-    "--doc-success": mode === "dark" ? "#4ade80" : "#16a34a",
-    "--doc-success-text": mode === "dark" ? "#86efac" : "#166534",
-    "--doc-warning": mode === "dark" ? "#fbbf24" : "#d97706",
-    "--doc-warning-text": mode === "dark" ? "#fde68a" : "#92400e",
-    "--doc-danger": mode === "dark" ? "#f87171" : "#dc2626",
-    "--doc-danger-text": mode === "dark" ? "#fecaca" : "#991b1b",
-    "--doc-info": mode === "dark" ? "#60a5fa" : "#2563eb",
-    "--doc-info-text": mode === "dark" ? "#bfdbfe" : "#1d4ed8",
-  };
-}
-
 function renderNavigation(manifest: SiteManifest, currentRoute: SiteRoute): string {
   if (manifest.config.navigation.length === 0) {
     return navigationEntries(manifest, currentRoute)
@@ -1201,7 +993,8 @@ function renderNavigation(manifest: SiteManifest, currentRoute: SiteRoute): stri
 
 function renderNavLink(item: SiteRoute, currentRoute: SiteRoute): string {
   const active = item.route === currentRoute.route ? " is-active" : "";
-  return `<a class="nav-link${active}" href="${hrefForRoute(item.route)}">${escapeHtml(item.title)}</a>`;
+  const ariaCurrent = active ? ' aria-current="page"' : "";
+  return `<a class="nav-link${active}" href="${hrefForRoute(item.route)}"${ariaCurrent}>${escapeHtml(item.title)}</a>`;
 }
 
 function renderOpenApiNavGroups(manifest: SiteManifest, specId: string, currentRoute: SiteRoute): string {
@@ -1216,7 +1009,7 @@ function renderOpenApiNavGroups(manifest: SiteManifest, specId: string, currentR
   }
 
   const filter = `<div class="api-nav-filter">
-    <input type="search" placeholder="Filter endpoints" aria-label="Filter API endpoints" data-api-nav-filter>
+    <input type="search" name="apiNavFilter" autocomplete="off" placeholder="Filter endpoints…" aria-label="Filter API endpoints" data-api-nav-filter>
     <p class="api-nav-empty" data-api-nav-empty>No endpoints match.</p>
   </div>`;
   const groups = [...grouped.entries()]
@@ -1237,8 +1030,9 @@ function renderApiNavLink(item: SiteRoute, currentRoute: SiteRoute): string {
   const operation = item.operation;
   if (!operation) return renderNavLink(item, currentRoute);
   const active = item.route === currentRoute.route ? " is-active" : "";
+  const ariaCurrent = active ? ' aria-current="page"' : "";
   const searchText = `${operation.method} ${operation.path} ${operation.summary ?? ""} ${operation.tags.join(" ")}`.toLowerCase();
-  return `<a class="nav-link api-nav-link ${methodClass(operation.method)}${active}" href="${hrefForRoute(item.route)}" data-api-nav-text="${escapeHtml(searchText)}"><span class="nav-method">${escapeHtml(operation.method)}</span><span class="nav-path">${escapeHtml(operation.path)}</span></a>`;
+  return `<a class="nav-link api-nav-link ${methodClass(operation.method)}${active}" href="${hrefForRoute(item.route)}"${ariaCurrent} data-api-nav-text="${escapeHtml(searchText)}"><span class="nav-method">${escapeHtml(operation.method)}</span><span class="nav-path">${escapeHtml(operation.path)}</span></a>`;
 }
 
 function renderApiNavFilterScript(): string {
@@ -1947,7 +1741,7 @@ function renderApiPlayground(route: SiteRoute): string {
   <form data-documentee-playground data-method="${escapeHtml(operation.method)}" data-path="${escapeHtml(operation.path)}" data-auth="${escapeHtml(playground.auth)}" data-api-key-name="${escapeHtml(playground.apiKeyName ?? "")}" data-api-key-location="${escapeHtml(playground.apiKeyLocation)}">
     ${environments}
     <label>Base URL
-      <input name="baseUrl" type="url" value="${escapeHtml(playground.baseUrl ?? "")}" required>
+      <input name="baseUrl" type="url" value="${escapeHtml(playground.baseUrl ?? "")}" required autocomplete="url" inputmode="url">
     </label>
     <p><span class="method">${escapeHtml(operation.method)}</span> <span class="path">${escapeHtml(operation.path)}</span></p>
     <div class="api-playground-grid">
@@ -2014,7 +1808,7 @@ function renderParameterInputs(parameters: Array<{ name: string; location: strin
   return `<fieldset>
   <legend>${escapeHtml(title)}</legend>
   ${parameters.map((parameter) => `<label>${escapeHtml(parameter.name)}${parameter.required ? " *" : ""}
-    <input name="${escapeHtml(parameter.name)}" data-param-location="${escapeHtml(parameter.location)}"${parameter.required ? " required" : ""}>
+    <input name="${escapeHtml(parameter.name)}" data-param-location="${escapeHtml(parameter.location)}" autocomplete="off"${parameter.location === "query" ? ' inputmode="text"' : ""}${parameter.required ? " required" : ""}>
   </label>`).join("\n  ")}
 </fieldset>`;
 }
@@ -2025,7 +1819,7 @@ function renderPlaygroundAuth(playground: NonNullable<NonNullable<SiteRoute["ope
   return `<fieldset>
   <legend>Authentication</legend>
   <label>${escapeHtml(label)}
-    <input name="documenteeAuth" type="password" autocomplete="off">
+    <input name="documenteeAuth" type="password" autocomplete="off" spellcheck="false">
   </label>
 </fieldset>`;
 }
@@ -2044,7 +1838,7 @@ function renderPlaygroundBody(requestBody: NonNullable<NonNullable<SiteRoute["op
   </label>
   ${fieldHint}
   <label>Body
-    <textarea name="body" spellcheck="false"></textarea>
+    <textarea name="body" autocomplete="off" spellcheck="false"></textarea>
   </label>
 </fieldset>`;
 }
@@ -2113,8 +1907,4 @@ function normalizeRoute(route: string): string {
 
 function cssValue(value: string): string {
   return value.replace(/[<>{};]/g, "");
-}
-
-function sanitizeStyleText(value: string): string {
-  return value.replace(/<\/style/gi, "<\\/style");
 }

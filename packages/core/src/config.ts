@@ -98,19 +98,31 @@ const redirectSchema = z.object({
   status: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).default(301),
 });
 
-const themeSchema = z.object({
-  preset: z.enum([
-    "neutral",
-    "mint",
-    "slate",
-    "highContrast",
-    "classic",
-    "terminal",
-    "startup",
-    "enterprise",
-    "api",
-    "minimal",
-  ]).optional(),
+const legacyThemePresetSchema = z.enum([
+  "neutral",
+  "mint",
+  "slate",
+  "highContrast",
+  "classic",
+  "terminal",
+  "startup",
+  "enterprise",
+  "api",
+  "minimal",
+]);
+
+const designSystemSchema = z.enum([
+  "minimal-technical",
+  "modern-glass",
+  "api-ide",
+  "enterprise-knowledge",
+  "premium-editorial",
+  "sci-fi-console",
+  "api-observatory",
+  "knowledge-graph",
+]);
+
+const themeTokenSchema = z.object({
   primaryColor: z.string().optional(),
   accentColor: z.string().optional(),
   backgroundColor: z.string().optional(),
@@ -122,7 +134,37 @@ const themeSchema = z.object({
   codeFontFamily: z.string().optional(),
   radius: z.string().optional(),
   navWidth: z.string().optional(),
+  contentWidth: z.string().optional(),
+  contentPadding: z.string().optional(),
+  densitySpace: z.string().optional(),
+  cardRadius: z.string().optional(),
+  pageBackground: z.string().optional(),
+  sidebarBackgroundColor: z.string().optional(),
+  panelBackgroundColor: z.string().optional(),
+  heroBackground: z.string().optional(),
+  bodyFontSize: z.string().optional(),
+  smallFontSize: z.string().optional(),
+  h1Size: z.string().optional(),
+  h2Size: z.string().optional(),
+  lineHeight: z.string().optional(),
+  headingWeight: z.string().optional(),
+  shadowCard: z.string().optional(),
+  shadowRaised: z.string().optional(),
+  methodGetColor: z.string().optional(),
+  methodPostColor: z.string().optional(),
+  methodPutColor: z.string().optional(),
+  methodPatchColor: z.string().optional(),
+  methodDeleteColor: z.string().optional(),
+  methodOptionsColor: z.string().optional(),
+  methodHeadColor: z.string().optional(),
+  methodTraceColor: z.string().optional(),
   customCss: z.string().optional(),
+});
+
+const themeSchema = themeTokenSchema.extend({
+  preset: legacyThemePresetSchema.optional(),
+  designSystem: designSystemSchema.optional(),
+  overrides: themeTokenSchema.optional(),
   darkMode: z.boolean().default(true),
 }).default({ darkMode: true });
 

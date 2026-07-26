@@ -66,8 +66,10 @@ export default {
     provider: "none",
   },
   theme: {
-    preset: "api",
-    primaryColor: "#2563eb",
+    designSystem: "api-ide",
+    overrides: {
+      primaryColor: "#2563eb",
+    },
     darkMode: true,
   },
   layout: {
@@ -264,8 +266,10 @@ export default {
     provider: "none",
   },
   theme: {
-    preset: "startup",
-    primaryColor: "#0f766e",
+    designSystem: "premium-editorial",
+    overrides: {
+      primaryColor: "#0f766e",
+    },
     darkMode: true,
   },
   layout: {
@@ -398,8 +402,10 @@ export default {
     provider: "none",
   },
   theme: {
-    preset: "enterprise",
-    primaryColor: "#475569",
+    designSystem: "enterprise-knowledge",
+    overrides: {
+      primaryColor: "#475569",
+    },
     darkMode: true,
   },
   layout: {

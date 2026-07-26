@@ -9,7 +9,7 @@ export default {
     exclude: ["superpowers/**"],
   },
   navigation: [
-    { group: "Start", pages: ["docs/index", "docs/get-started/quickstart", "docs/configuration"] },
+    { group: "Start", pages: ["docs/index", "docs/get-started/quickstart", "docs/get-started/use-documentee", "docs/configuration"] },
     { group: "Reference", pages: ["docs/api-reference/config", "docs/api-reference/cli", "docs/api-reference/openapi", "docs/components"] },
     { group: "AI Agents", pages: ["docs/ai-agents/index", "docs/ai-agents/doc-builder-guide"] },
     {
@@ -37,10 +37,12 @@ export default {
     },
   },
   theme: {
-    preset: "neutral",
-    primaryColor: "#2563eb",
-    navWidth: "300px",
-    radius: "8px",
+    designSystem: "minimal-technical",
+    overrides: {
+      primaryColor: "#2563eb",
+      navWidth: "300px",
+      radius: "8px",
+    },
     darkMode: true,
   },
 };

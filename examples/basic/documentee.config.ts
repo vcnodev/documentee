@@ -78,10 +78,12 @@ export default {
     { from: "/start", to: "/get-started/quickstart", status: 301 },
   ],
   theme: {
-    preset: "mint",
-    primaryColor: "#2563eb",
-    navWidth: "300px",
-    radius: "8px",
+    designSystem: "api-ide",
+    overrides: {
+      primaryColor: "#2563eb",
+      navWidth: "300px",
+      radius: "8px",
+    },
     darkMode: true,
   },
 };

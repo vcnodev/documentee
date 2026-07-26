@@ -142,9 +142,9 @@ Documentee renders a single deferred script tag only when `analytics` is configu
 
 ## theme
 
-`theme.preset` can be `neutral`, `mint`, `slate`, `highContrast`, `classic`, `terminal`, `startup`, `enterprise`, `api`, or `minimal`. Each preset includes light tokens and dark-mode tokens when `darkMode` is `true`.
+`theme.designSystem` selects a bundled visual system. It can be `minimal-technical`, `modern-glass`, `api-ide`, `enterprise-knowledge`, `premium-editorial`, `sci-fi-console`, `api-observatory`, or `knowledge-graph`. Each design system includes light tokens and dark-mode tokens when `darkMode` is `true`.
 
-Custom tokens override preset values:
+`theme.overrides` customizes the selected design system:
 
 - `primaryColor`
 - `accentColor`
@@ -157,8 +157,43 @@ Custom tokens override preset values:
 - `codeFontFamily`
 - `radius`
 - `navWidth`
+- `contentWidth`
+- `contentPadding`
+- `densitySpace`
+- `cardRadius`
+- `bodyFontSize`
+- `h1Size`
+- `h2Size`
+- `lineHeight`
+- `headingWeight`
+- `shadowCard`
+- `shadowRaised`
+- `methodGetColor`
+- `methodPostColor`
+- `methodPutColor`
+- `methodPatchColor`
+- `methodDeleteColor`
+- `methodOptionsColor`
 - `customCss`
-- `darkMode`
+
+`theme.darkMode` controls whether dark-mode variables are emitted.
+
+Example:
+
+```ts
+theme: {
+  designSystem: "api-ide",
+  overrides: {
+    contentWidth: "1040px",
+    densitySpace: "10px",
+    methodGetColor: "#22c55e",
+    methodPostColor: "#3b82f6"
+  },
+  darkMode: true
+}
+```
+
+Top-level token fields and `theme.preset` are accepted for migration compatibility. New configs should prefer `theme.designSystem` plus `theme.overrides`.
 
 ## layout
 

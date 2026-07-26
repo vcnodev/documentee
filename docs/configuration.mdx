@@ -20,7 +20,10 @@ export default {
     { group: "Reference", pages: ["docs/api-reference/config"] },
   ],
   search: { provider: "pagefind" },
-  theme: { preset: "neutral", primaryColor: "#2563eb" },
+  theme: {
+    designSystem: "minimal-technical",
+    overrides: { primaryColor: "#2563eb" },
+  },
 };
 ```
 
@@ -42,7 +45,25 @@ Use absolute routes when a page is generated or easier to name directly:
 
 ## Theme
 
-`theme.preset` can be `mint`, `slate`, `neutral`, or `highContrast`. Presets provide defaults. Custom tokens such as `primaryColor`, `accentColor`, `navWidth`, `fontFamily`, and `customCss` override the preset.
+`theme.designSystem` selects a complete visual baseline. It can be `minimal-technical`, `modern-glass`, `api-ide`, `enterprise-knowledge`, `premium-editorial`, `sci-fi-console`, `api-observatory`, or `knowledge-graph`.
+
+Use `theme.overrides` for local tuning:
+
+```ts
+theme: {
+  designSystem: "api-ide",
+  overrides: {
+    primaryColor: "#2563eb",
+    navWidth: "300px",
+    radius: "8px",
+    contentWidth: "1040px",
+    methodGetColor: "#22c55e",
+  },
+  darkMode: true,
+}
+```
+
+Overrides win over design-system tokens. Use them for brand colors, fonts, layout density, content width, card radius, shadows, API method colors, and custom CSS. Existing flat token fields and `theme.preset` are still accepted for migration compatibility, but new configs should use `designSystem` plus `overrides`.
 
 ## Search
 

@@ -11,6 +11,10 @@ const defaultSeo = {
   twitterCard: "summary_large_image" as const,
 };
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const themePresetExpectations = [
   {
     preset: "neutral",
@@ -44,7 +48,7 @@ const themePresetExpectations = [
   },
   {
     preset: "startup",
-    light: { primary: "#e11d48", accent: "#2563eb", background: "#fff8f7", code: "#fff1f2" },
+    light: { primary: "#c81046", accent: "#2563eb", background: "#fff8f7", code: "#fff1f2" },
     dark: { background: "#1f1020", text: "#fff1f5", border: "#5b2744", code: "#2a1429" },
   },
   {
@@ -61,6 +65,49 @@ const themePresetExpectations = [
     preset: "minimal",
     light: { primary: "#111827", accent: "#6b7280", background: "#ffffff", code: "#f9fafb" },
     dark: { background: "#0a0a0a", text: "#fafafa", border: "#2a2a2a", code: "#141414" },
+  },
+] as const;
+
+const designSystemExpectations = [
+  {
+    designSystem: "minimal-technical",
+    light: { primary: "#2563eb", accent: "#1d4ed8", background: "#ffffff", code: "#f5f5f5", font: "Inter, system-ui, sans-serif", navWidth: "280px" },
+    dark: { background: "#111827", text: "#f9fafb", border: "#374151", code: "#1f2937" },
+  },
+  {
+    designSystem: "modern-glass",
+    light: { primary: "#5b8cff", accent: "#7c3aed", background: "#09090b", code: "#18181b", font: "Geist Sans, Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "300px" },
+    dark: { background: "#09090b", text: "#fafafa", border: "rgba(255,255,255,.08)", code: "#18181b" },
+  },
+  {
+    designSystem: "api-ide",
+    light: { primary: "#3b82f6", accent: "#8b5cf6", background: "#0b0d12", code: "#171c26", font: "Geist Sans, Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "280px" },
+    dark: { background: "#0b0d12", text: "#f3f4f6", border: "#364152", code: "#171c26" },
+  },
+  {
+    designSystem: "enterprise-knowledge",
+    light: { primary: "#2563eb", accent: "#8b5cf6", background: "#f8fafc", code: "#f1f5f9", font: "IBM Plex Sans, Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "320px" },
+    dark: { background: "#0f172a", text: "#f8fafc", border: "#334155", code: "#111827" },
+  },
+  {
+    designSystem: "premium-editorial",
+    light: { primary: "#4f46e5", accent: "#ec4899", background: "#fcfcfd", code: "#f7f7f8", font: "Instrument Serif, Georgia, serif", navWidth: "260px" },
+    dark: { background: "#09090b", text: "#fafafa", border: "#27272a", code: "#1b1b1f" },
+  },
+  {
+    designSystem: "sci-fi-console",
+    light: { primary: "#5ea1ff", accent: "#8b5cf6", background: "#050608", code: "#141926", font: "Geist Sans, Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "300px" },
+    dark: { background: "#050608", text: "#f8fafc", border: "#263244", code: "#141926" },
+  },
+  {
+    designSystem: "api-observatory",
+    light: { primary: "#3b82f6", accent: "#14b8a6", background: "#0b0f14", code: "#1a2230", font: "Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "300px" },
+    dark: { background: "#0b0f14", text: "#f8fafc", border: "#2a3342", code: "#1a2230" },
+  },
+  {
+    designSystem: "knowledge-graph",
+    light: { primary: "#2563eb", accent: "#14b8a6", background: "#fafafa", code: "#f5f5f5", font: "Inter, ui-sans-serif, system-ui, sans-serif", navWidth: "300px" },
+    dark: { background: "#09090b", text: "#fafafa", border: "#2a2a2a", code: "#141414" },
   },
 ] as const;
 
@@ -191,6 +238,13 @@ describe("static renderer", () => {
 
     expect(html).toContain("--doc-primary: #2563eb;");
     expect(html).toContain("--doc-accent: #0f766e;");
+    expect(html).toContain("--doc-link: #2563eb;");
+    expect(html).toContain("--doc-link-hover: #1d4ed8;");
+    expect(html).toContain("--doc-surface: #ffffff;");
+    expect(html).toContain("--doc-surface-raised: color-mix(in srgb, #ffffff 96%, #d4d4d8);");
+    expect(html).toContain("--doc-focus-ring:");
+    expect(html).toContain("--doc-space-4: 16px;");
+    expect(html).toContain("--doc-shadow-card:");
     expect(html).toContain("--doc-nav-width: 300px;");
     expect(html).toContain("font-family: var(--doc-font-family)");
     expect(html).toContain(".custom { color: red; }");
@@ -452,6 +506,147 @@ describe("static renderer", () => {
     expect(html).toMatch(new RegExp(`@media \\(prefers-color-scheme: dark\\) \\{[\\s\\S]*--doc-code-background: ${dark.code};`));
   });
 
+  it.each(designSystemExpectations)("renders $designSystem design-system tokens as CSS variables", ({ designSystem, light, dark }) => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          designSystem,
+          darkMode: true,
+        },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain(`--doc-primary: ${light.primary};`);
+    expect(html).toContain(`--doc-accent: ${light.accent};`);
+    expect(html).toContain(`--doc-background: ${light.background};`);
+    expect(html).toContain(`--doc-code-background: ${light.code};`);
+    expect(html).toContain(`--doc-font-family: ${light.font};`);
+    expect(html).toContain(`--doc-nav-width: ${light.navWidth};`);
+    expect(html).toContain("@media (prefers-color-scheme: dark)");
+    expect(html).toMatch(new RegExp(`@media \\(prefers-color-scheme: dark\\) \\{[\\s\\S]*--doc-background: ${escapeRegExp(dark.background)};`));
+    expect(html).toMatch(new RegExp(`@media \\(prefers-color-scheme: dark\\) \\{[\\s\\S]*--doc-text: ${escapeRegExp(dark.text)};`));
+    expect(html).toMatch(new RegExp(`@media \\(prefers-color-scheme: dark\\) \\{[\\s\\S]*--doc-border: ${escapeRegExp(dark.border)};`));
+    expect(html).toMatch(new RegExp(`@media \\(prefers-color-scheme: dark\\) \\{[\\s\\S]*--doc-code-background: ${escapeRegExp(dark.code)};`));
+  });
+
+  it("lets nested theme overrides win over design-system tokens and flat tokens", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          designSystem: "enterprise-knowledge",
+          primaryColor: "#0f766e",
+          navWidth: "300px",
+          overrides: {
+            primaryColor: "#db2777",
+            navWidth: "340px",
+            fontFamily: "Aptos, ui-sans-serif, system-ui, sans-serif",
+          },
+          darkMode: false,
+        },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-primary: #db2777;");
+    expect(html).toContain("--doc-accent: #8b5cf6;");
+    expect(html).toContain("--doc-nav-width: 340px;");
+    expect(html).toContain("--doc-font-family: Aptos, ui-sans-serif, system-ui, sans-serif;");
+    expect(html).toContain(":root { color-scheme: light;");
+  });
+
+  it("uses semantic design-system tokens in the rendered shell CSS", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: {
+          designSystem: "premium-editorial",
+          darkMode: true,
+        },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-content-width: 760px;");
+    expect(html).toContain("--doc-body-font-size: 18px;");
+    expect(html).toContain("body { background: var(--doc-page-background);");
+    expect(html).toContain(".doc-sidebar { align-self: start; background: var(--doc-sidebar-background);");
+    expect(html).toContain(".doc-content-frame { max-width: var(--doc-content-width);");
+    expect(html).toContain(".doc-content { background: var(--doc-surface);");
+    expect(html).toContain("border-radius: var(--doc-card-radius);");
+    expect(html).toContain("padding: var(--doc-content-padding);");
+    expect(html).toContain(".doc-content h1 { font-size: var(--doc-h1-size);");
+    expect(html).toContain(".doc-content p, .doc-content li { font-size: var(--doc-body-font-size); line-height: var(--doc-line-height);");
+    expect(html).toContain(".api-hero { background: var(--doc-hero-background);");
+    expect(html).toContain(".method-get { --method-color: var(--doc-method-get); }");
+    expect(html).toContain(".method-post { --method-color: var(--doc-method-post); }");
+  });
+
   it("lets custom theme tokens override preset tokens", () => {
     const manifest: SiteManifest = {
       config: {
@@ -491,6 +686,42 @@ describe("static renderer", () => {
     expect(html).toContain("--doc-accent: #2563eb;");
     expect(html).toContain("--doc-nav-width: 320px;");
     expect(html).toContain(":root { color-scheme: light;");
+  });
+
+  it("uses an accessible default dark link color when a dark preset does not define one", () => {
+    const manifest: SiteManifest = {
+      config: {
+        site: { name: "Acme", description: "" },
+        content: { directory: "docs", exclude: [] },
+        versions: [],
+        navigation: [],
+        openapi: { specs: [] },
+        seo: defaultSeo,
+        redirects: [],
+        search: { provider: "none" },
+        theme: { preset: "neutral", primaryColor: "#2563eb", darkMode: true },
+        layout: { nav: "sidebar", toc: "right", footer: true, breadcrumbs: true },
+      },
+      pages: [],
+      operations: [],
+      routes: [
+        {
+          kind: "page",
+          route: "/",
+          title: "Home",
+          description: "",
+          html: "<h1>Home</h1>",
+          markdown: "",
+        },
+      ],
+    };
+
+    const html = renderRoute(manifest, manifest.routes[0]);
+
+    expect(html).toContain("--doc-primary: #2563eb;");
+    expect(html).toContain("@media (prefers-color-scheme: dark)");
+    expect(html).toMatch(/@media \(prefers-color-scheme: dark\) \{[\s\S]*--doc-link: #93c5fd;/);
+    expect(html).toMatch(/@media \(prefers-color-scheme: dark\) \{[\s\S]*--doc-link-hover: #bfdbfe;/);
   });
 
   it("renders a polished static shell with route-aware navigation and search entry", () => {
@@ -557,7 +788,15 @@ describe("static renderer", () => {
     expect(html).toContain('aria-label="Mobile navigation"');
     expect(html).toContain('class="doc-topbar"');
     expect(html).toContain('class="doc-search-link" href="/search/"');
-    expect(html).toContain('class="nav-link is-active" href="/get-started/quickstart/"');
+    expect(html).toContain('class="nav-link is-active" href="/get-started/quickstart/" aria-current="page"');
+    expect(html).toContain("touch-action: manipulation");
+    expect(html).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(html).toContain("scroll-behavior: auto");
+    expect(html).toContain("min-height: 44px");
+    expect(html).toContain("env(safe-area-inset-top)");
+    expect(html).toContain(".doc-mobile-menu[open] .doc-mobile-nav { display: grid; }");
+    expect(html).toContain("position: fixed;");
+    expect(html).toContain("inset:");
     expect(html).toContain(".doc-content h1");
     expect(html).toContain("@media (max-width: 820px)");
     expect(html).toContain(".doc-mobile-header {");
@@ -1862,6 +2101,8 @@ describe("static renderer", () => {
     expect(html).toContain('name="body"');
     expect(html).toContain("Browser requests depend on this API's CORS policy");
     expect(html).toContain('name="baseUrl" type="url"');
+    expect(html).toContain('autocomplete="url"');
+    expect(html).toContain('inputmode="url"');
     expect(html).toContain('name="environment"');
     expect(html).toContain('data-base-url="https://sandbox.acme.test"');
     expect(html).toContain("Production");
@@ -1872,6 +2113,8 @@ describe("static renderer", () => {
     expect(html).toContain("data-playground-response-headers");
     expect(html).toContain("data-playground-response-body");
     expect(html).toContain(".api-playground input, .api-playground select, .api-playground textarea");
+    expect(html).toContain("min-height: 44px");
+    expect(html).toContain("touch-action: manipulation");
     expect(html).toContain("background: color-mix(in srgb, var(--doc-background) 92%, var(--doc-border));");
     expect(html).toContain(".api-playground button:hover");
     expect(html).toContain(".api-playground-preview");
