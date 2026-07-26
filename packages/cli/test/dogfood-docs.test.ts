@@ -95,6 +95,8 @@ describe("dogfood docs", () => {
     expect(workflow).toContain("actions/upload-pages-artifact@v4");
     expect(workflow).toContain("actions/deploy-pages@v4");
     expect(workflow).toContain("node-version: 22");
+    expect(workflow.indexOf("run: pnpm build")).toBeGreaterThan(-1);
+    expect(workflow.indexOf("run: pnpm build")).toBeLessThan(workflow.indexOf("run: pnpm docs:validate"));
     expect(workflow).toContain("pages: write");
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("pnpm docs:validate");
